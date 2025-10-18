@@ -1,0 +1,79 @@
+@import url('./mainPage.css');
+
+body {
+    background-color: #f0f2f5; 
+}
+
+.login-container {
+    padding: 20px;
+}
+
+.login-card {
+    max-width: 480px; 
+    width: 100%;
+    border-radius: 15px; 
+    border: none;
+    background-color: white;
+}
+
+.login-card .logo-img {
+    max-height: 120px; 
+}
+
+.login-card .form-control-lg,
+.login-card .form-select-lg {
+    height: calc(3.5rem + 2px); 
+    font-size: 1.25rem;
+    border-radius: 8px;
+    border-color: #ced4da;
+    padding: 1rem 1.25rem;
+}
+
+.btn-login {
+    background-color: var(--color-highlight-green); 
+    border-color: var(--color-highlight-green);
+    font-weight: bold;
+    padding: 0.75rem 2rem;
+    transition: background-color 0.3s;
+}
+
+.btn-login:hover {
+    background-color: #4cae4c; 
+    border-color: #4cae4c;
+}
+
+.link-forgot-pass {
+    color: var(--color-primary-blue); 
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.link-forgot-pass:hover {
+    color: var(--color-highlight-green);
+}
+
+.link-create-account {
+    color: var(--color-highlight-green);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: color 0.3s;
+}
+
+.link-create-account:hover {
+    color: var(--color-primary-blue);
+}
+
+.card-title {
+    color: var(--color-primary-blue);
+}
+
+.olvidado-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    color: var(--color-primary-blue);
+    text-decoration: underline;
+}

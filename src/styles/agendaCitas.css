@@ -1,0 +1,283 @@
+@import url('./mainPage.css'); 
+
+body {
+    background-color: #f8f9fa;
+}
+
+.main-title {
+    color: var(--color-primary-blue);
+    font-weight: 700;
+}
+
+.cerrar-sesion {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: var(--color-accent-yellow);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.info-card {
+    border-color: var(--color-primary-blue);
+}
+
+.info-header {
+    background-color: var(--color-primary-blue) !important;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 1rem;
+}
+
+.cita-card {
+    border-color: var(--color-highlight-green);
+}
+
+.cita-header {
+    background-color: var(--color-highlight-green) !important;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 1rem;
+}
+
+.afiliado-info {
+    font-size: 0.95rem;
+    font-weight: 400;
+}
+
+.form-select-lg {
+    border-color: var(--color-secondary-blue);
+}
+
+.calendar-container {
+    background-color: white;
+    border: 1px solid var(--color-highlight-green) !important; 
+}
+
+.month-year-label {
+    color: var(--color-primary-blue);
+    font-size: 1.2rem;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    text-align: center;
+}
+
+.day-name {
+    font-weight: bold;
+    color: #6c757d;
+}
+
+.day-number {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 35px;
+    height: 35px;
+    margin: auto;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    font-weight: 500;
+}
+
+.day-number.inactive {
+    color: #ced4da; 
+    cursor: default;
+}
+
+.day-number.available {
+    background-color: #e9f5e9; 
+    color: #333;
+}
+
+.day-number.available:hover {
+    background-color: var(--color-highlight-green);
+    color: white;
+}
+
+.day-number.selected {
+    background-color: var(--color-primary-blue);
+    color: white;
+    font-weight: bold;
+    border: 2px solid var(--color-accent-yellow); 
+}
+
+.time-header {
+    background-color: var(--color-primary-blue);
+    color: white;
+    padding: 1rem;
+    margin-bottom: 0 !important;
+    font-size: 1.2rem;
+}
+
+.available-times-table thead th {
+    background-color: var(--color-secondary-blue);
+    color: white;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.available-times-table tbody td {
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 500;
+}
+
+.available-times-table .btn-primary {
+    background-color: var(--color-highlight-green);
+    border-color: var(--color-highlight-green);
+}
+
+.available-times-table .btn-primary:hover {
+    background-color: #4cae4c;
+    border-color: #4cae4c;
+}
+
+.no-data-message {
+    padding: 20px;
+    font-style: italic;
+    color: #6c757d;
+}
+
+.tab-buttons-container {
+    display: flex;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tab-button {
+    flex: 1;
+    padding: 15px 20px;
+    background: transparent;
+    border: 2px solid var(--color-highlight-green);
+    color: var(--color-highlight-green);
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tab-button:first-child {
+    border-right: 1px solid var(--color-highlight-green);
+}
+
+.tab-button:last-child {
+    border-left: 1px solid var(--color-highlight-green);
+}
+
+.tab-button:hover {
+    background: rgba(40, 167, 69, 0.1);
+    transform: translateY(-1px);
+}
+
+.tab-button.active {
+    background: var(--color-highlight-green);
+    color: white;
+}
+
+.tab-button.active:hover {
+    background: #4cae4c;
+    transform: none;
+}
+
+.appointment-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.appointment-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.appointment-header {
+    background: linear-gradient(135deg, var(--color-primary-blue), var(--color-secondary-blue));
+    color: white;
+    padding: 12px 15px;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.appointment-body {
+    padding: 15px;
+}
+
+.appointment-info {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.appointment-info i {
+    width: 20px;
+    margin-right: 10px;
+    color: var(--color-primary-blue);
+}
+
+.appointment-status {
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.status-programada {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.no-appointments {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.no-appointments i {
+    color: #dee2e6;
+}
+
+.tab-content {
+    transition: opacity 0.3s ease;
+}
+
+.tab-content.active {
+    opacity: 1;
+}
+
+.cancel-appointment-btn {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.cancel-appointment-btn:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
