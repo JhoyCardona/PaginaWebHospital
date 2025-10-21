@@ -26,7 +26,15 @@ const Calendar = ({
   const isDateAvailable = (day) => {
     const today = new Date()
     const dateToCheck = new Date(currentYear, currentMonth, day)
-    return dateToCheck >= today
+    
+    // Verificar si es domingo (0 = domingo)
+    const isDSunday = dateToCheck.getDay() === 0
+    
+    // Verificar si la fecha es hoy o en el futuro
+    const isFutureDate = dateToCheck >= today
+    
+    // Solo disponible si es fecha futura y NO es domingo
+    return isFutureDate && !isDSunday
   }
 
   const generateCalendarDays = () => {
@@ -45,12 +53,29 @@ const Calendar = ({
     for (let day = 1; day <= daysInMonth; day++) {
       const isAvailable = isDateAvailable(day)
       const isSelected = selectedDate === day
+      const dateToCheck = new Date(currentYear, currentMonth, day)
+      const isSundayDate = dateToCheck.getDay() === 0
+      
+      let dayClass = 'day-number'
+      
+      if (isSundayDate) {
+        dayClass += ' sunday-disabled'
+      } else if (isAvailable) {
+        dayClass += ' available'
+      } else {
+        dayClass += ' inactive'
+      }
+      
+      if (isSelected && isAvailable) {
+        dayClass += ' selected'
+      }
       
       days.push(
         <div
           key={day}
-          className={`day-number ${isAvailable ? 'available' : 'inactive'} ${isSelected ? 'selected' : ''}`}
+          className={dayClass}
           onClick={isAvailable ? () => onDateSelect(day) : undefined}
+          title={isSundayDate ? 'Los domingos no están disponibles para citas' : ''}
         >
           {day}
         </div>

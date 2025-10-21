@@ -1,0 +1,267 @@
+@import url('./mainPage.css'); 
+
+/* Dashboard médico general */
+.dashboard-medico {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Header del médico */
+.medico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 30px;
+}
+
+.medico-info {
+    color: #000 !important;
+    visibility: visible !important;
+}
+
+.medico-name {
+    color: #000 !important;
+    visibility: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+    font-size: 28px !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+    text-shadow: none !important;
+}
+
+.medico-especialidad {
+    color: #6c757d !important;
+    visibility: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+    font-size: 16px !important;
+    margin: 5px 0 0 0 !important;
+    text-shadow: none !important;
+}
+
+/* Botón de logout SIEMPRE VISIBLE */
+.logout-btn-dashboard {
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: 2px solid #dc3545 !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-block !important;
+    position: relative !important;
+    z-index: 999999 !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    line-height: 1 !important;
+    min-width: 140px !important;
+    text-align: center !important;
+}
+
+.logout-btn-dashboard:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
+}
+
+.logout-btn-dashboard:focus,
+.logout-btn-dashboard:active {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+    outline: 2px solid #007bff !important;
+    outline-offset: 2px !important;
+}
+
+/* Tarjetas de estadísticas */
+.dashboard-medico .card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-medico .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-medico .card-body {
+    padding: 25px;
+    text-align: center;
+}
+
+.dashboard-medico .card-title {
+    color: #6c757d;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.dashboard-medico .text-primary {
+    color: #007bff !important;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.dashboard-medico .text-warning {
+    color: #ffc107 !important;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.dashboard-medico .text-success {
+    color: #007bff !important;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+/* Sección de citas */
+.citas-section {
+    margin-top: 40px;
+}
+
+.citas-section h3 {
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border: 1px solid #b6d4ea;
+    color: #0c5460;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Tabla de citas */
+.table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.table {
+    margin-bottom: 0;
+    background-color: white;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border: none;
+    font-weight: 600;
+    color: #333;
+    padding: 15px 12px;
+    font-size: 14px;
+}
+
+.table tbody td {
+    padding: 15px 12px;
+    vertical-align: middle;
+    border-top: 1px solid #dee2e6;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+.bg-success {
+    background-color: #007bff !important;
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+/* Botones de acción en tabla */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-success {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.me-2 {
+    margin-right: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-medico {
+        padding: 15px;
+    }
+    
+    .medico-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .logout-btn-dashboard {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .medico-name {
+        font-size: 24px !important;
+    }
+    
+    .table-responsive {
+        border-radius: 8px;
+    }
+    
+    .table {
+        font-size: 14px;
+    }
+    
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-medico .card-body {
+        padding: 20px;
+    }
+    
+    .dashboard-medico .text-primary,
+    .dashboard-medico .text-warning,
+    .dashboard-medico .text-success {
+        font-size: 28px;
+    }
+    
+    .table thead th,
+    .table tbody td {
+        padding: 12px 8px;
+    }
+}

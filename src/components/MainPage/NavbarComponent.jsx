@@ -1,10 +1,11 @@
-import React from 'react'
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-const NavbarComponent = ({ onGoToLogin }) => {
+const NavbarComponent = () => {
   return (
     <nav className="navbar navbar-expand-lg custom-navbar">
       <div className="container">
-        <a className="navbar-brand text-primary fw-bold fs-3" href="/">
+        <Link className="navbar-brand text-primary fw-bold fs-3" to="/">
           <img 
             src="/imagenes/Gemini_Generated_Image_o4vb5no4vb5no4vb-removebg-preview.png" 
             alt="Logo de la empresa" 
@@ -17,7 +18,7 @@ const NavbarComponent = ({ onGoToLogin }) => {
           <span style={{display: 'none', color: 'var(--color-primary-blue)', fontWeight: 'bold'}}>
             🏥 MediLink
           </span>
-        </a>
+        </Link>
         <button 
           className="navbar-toggler" 
           type="button" 
@@ -38,18 +39,27 @@ const NavbarComponent = ({ onGoToLogin }) => {
               <a className="nav-link" href="#contacto">Contacto</a>
             </li>
             <li className="nav-item">
-              <button 
-                className="nav-link nav-link-highlight btn" 
-                onClick={onGoToLogin}
+              <Link 
+                className="nav-link nav-link-highlight btn me-2" 
+                to="/login"
               >
-                Agendar Cita
-              </button>
+                Pacientes
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link 
+                className="nav-link nav-link-medicos btn" 
+                to="/login-medicos"
+              >
+                <i className="fas fa-user-md me-2"></i>
+                Médicos
+              </Link>
             </li>
           </ul>
         </div>
       </div>
     </nav>
-  )
-}
+  );
+};
 
 export default NavbarComponent

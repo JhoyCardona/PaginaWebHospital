@@ -1,0 +1,260 @@
+/* Estilos para IncapacidadManager */
+.incapacidad-manager {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #007bff;
+  margin-bottom: 25px;
+}
+
+.incapacidad-manager h4 {
+  color: #007bff;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.incapacidad-manager h4:before {
+  content: '🏥';
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.incapacidad-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.dias-conversion {
+  margin-top: 5px;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.incapacidad-preview {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #dee2e6;
+  margin-top: 15px;
+}
+
+.incapacidad-preview h5 {
+  color: #007bff;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.incapacidad-preview h5:before {
+  content: '📋';
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.preview-content {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.preview-row:last-child {
+  border-bottom: none;
+}
+
+.preview-row .label {
+  font-weight: 600;
+  color: #495057;
+  flex: 0 0 40%;
+}
+
+.preview-row .value {
+  color: #212529;
+  flex: 1;
+  text-align: right;
+  font-weight: 500;
+}
+
+.incapacidad-notice {
+  display: flex;
+  gap: 12px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 10px;
+}
+
+.notice-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.notice-text {
+  color: #856404;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.notice-text strong {
+  color: #533f03;
+}
+
+.no-incapacidad {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.no-incapacidad-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.no-incapacidad-text {
+  color: #155724;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Estados del formulario */
+.form-control:disabled {
+  background-color: #f8f9fa;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Animaciones */
+.incapacidad-preview {
+  animation: slideIn 0.3s ease-out;
+}
+
+.no-incapacidad {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .incapacidad-manager {
+    padding: 20px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .preview-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .preview-row .label {
+    flex: none;
+  }
+  
+  .preview-row .value {
+    text-align: left;
+    flex: none;
+    width: 100%;
+  }
+  
+  .incapacidad-notice {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .no-incapacidad {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .incapacidad-manager {
+    padding: 15px;
+  }
+  
+  .incapacidad-preview {
+    padding: 15px;
+  }
+  
+  .preview-content {
+    padding: 12px;
+  }
+  
+  .incapacidad-notice,
+  .no-incapacidad {
+    padding: 12px;
+  }
+  
+  .notice-text,
+  .no-incapacidad-text {
+    font-size: 12px;
+  }
+}

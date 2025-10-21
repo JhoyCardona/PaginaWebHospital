@@ -29,10 +29,6 @@ const LoginPage = () => {
     terminosAceptados: false
   })
 
-  // Credenciales de prueba
-  const TEST_ID = '123455'
-  const TEST_PASS = 'pass1234'
-
   useEffect(() => {
     // Redirigir si el usuario ya está logueado
     if (localStorage.getItem('isLoggedIn') === 'true') {
@@ -40,30 +36,32 @@ const LoginPage = () => {
     }
   }, [navigate])
 
-  const authenticateUser = (userId, password) => {
-    // 1. Verificar credenciales de prueba primero
-    if (userId === TEST_ID && password === TEST_PASS) {
-      return true
-    }
+  const authenticateUser = (tipoId, numId, password) => {
+    // Verificar usuarios registrados en localStorage con tipo de documento, número y contraseña
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     
-    // 2. Verificar usuarios registrados en localStorage
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-    const user = registeredUsers.find(u => u.userId === userId && u.password === password)
+    const user = registeredUsers.find(u => 
+      u.tipoId === tipoId && 
+      u.userId === numId && 
+      u.password === password
+    );
     
     if (user) {
-      return true
+      // Normalizar datos para compatibilidad
+      const userData = {
+        id: user.userId,
+        firstName: user.nombre,
+        lastName: user.apellido,
+        email: user.email,
+        phone: user.telefono,
+        tipoId: user.tipoId,
+        fechaNacimiento: user.fechaNacimiento,
+        createdAt: user.fechaRegistro
+      };
+      return { success: true, userData };
     }
     
-    // 3. Verificar si hay datos legacy (usuarios que ya tenían citas)
-    const existingAppointmentKeys = Object.keys(localStorage).filter(key => key.startsWith('citasProgramadas_'))
-    for (let key of existingAppointmentKeys) {
-      const existingUserId = key.replace('citasProgramadas_', '')
-      if (existingUserId === userId) {
-        return true
-      }
-    }
-    
-    return false
+    return { success: false, userData: null };
   }
 
   const handleLoginSubmit = (e) => {
@@ -81,13 +79,18 @@ const LoginPage = () => {
       return
     }
     
-    if (authenticateUser(numId.trim(), password)) {
-      localStorage.setItem('isLoggedIn', 'true')
-      localStorage.setItem('userId', numId.trim())
-      login(numId.trim())
-      navigate('/agenda-citas')
+    const authResult = authenticateUser(tipoId, numId.trim(), password);
+    
+    if (authResult.success) {
+      // Guardar datos del usuario autenticado
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userId', numId.trim());
+      localStorage.setItem('currentUserData', JSON.stringify(authResult.userData));
+      
+      login(numId.trim());
+      navigate('/agenda-citas');
     } else {
-      alert('Credenciales incorrectas. Verifique su información e intente nuevamente.')
+      alert('Credenciales incorrectas. Verifique el tipo de documento, número de identificación y contraseña.');
     }
   }
 
