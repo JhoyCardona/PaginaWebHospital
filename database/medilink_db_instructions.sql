@@ -1,0 +1,124 @@
+-- INSTRUCCIONES PARA IMPORTAR LOS ARCHIVOS SQL DE MEDILINK
+-- Archivo: medilink_db_instructions.sql
+-- Este archivo contiene solo comentarios explicativos (no ejecuta nada).
+-- Está pensado para estudiantes: lenguaje claro y pasos para evitar problemas comunes.
+
+-- RESUMEN DEL CONTENIDO
+-- 1) medilink_db_full.sql        -> Crea la base de datos, tablas y vistas.
+-- 2) medilink_db_insert_simple.sql -> Inserta datos de ejemplo (usuarios, doctores, citas, horarios).
+-- 3) sp_get_available_slots.sql  -> Contiene solo el procedimiento almacenado (usa DELIMITER).
+
+-- ORDEN RECOMENDADO PARA EJECUTARLOS (PASO A PASO)
+-- 1) medilink_db_full.sql
+--    - Importa primero este archivo. Crea la base de datos medilink_db y todas las tablas/vistas.
+--    - En phpMyAdmin: ve a "Importar" -> selecciona el archivo -> "Continuar".
+--    - Si prefieres la terminal (Linux), ejecuta:
+--         mysql -u root -p < /ruta/al/medilink_db_full.sql
+--      (Primero crea la base: CREATE DATABASE medilink_db; o el archivo ya lo hace.)
+--
+-- 2) medilink_db_insert_simple.sql
+--    - Contiene INSERTs con datos de ejemplo. Importa este archivo después de crear las tablas.
+--    - En phpMyAdmin: selecciona la base medilink_db -> Importar -> sube el archivo -> Continuar.
+--    - En terminal:
+--         mysql -u root -p medilink_db < /ruta/al/medilink_db_insert_simple.sql
+--
+-- 3) sp_get_available_slots.sql (opcional)
+--    - Este archivo contiene solo el CREATE PROCEDURE con DELIMITER.
+--    - NO lo pegues dentro del mismo archivo grande si importaste todo junto sin delimiters.
+--    - En phpMyAdmin: abre la pestaña SQL, pega el contenido del archivo sp_get_available_slots.sql (incluye DELIMITER) y ejecuta.
+--    - En terminal:
+--         mysql -u root -p medilink_db < /ruta/al/sp_get_available_slots.sql
+--      (la terminal normalmente maneja bien los delimiters y es más fiable para procedimientos.)
+
+-- NOTAS Y COSAS A TENER EN CUENTA (EXPLICADO PARA ESTUDIANTES)
+-- A) phpMyAdmin y 'DELIMITER'
+--    - phpMyAdmin ejecuta sentencias terminadas en ';'. Dentro de un PROCEDURE hay muchos ';',
+--      por eso usamos DELIMITER para cambiar el marcador de fin temporalmente.
+--    - Si importas todo el archivo que incluye PROCEDURE sin delimiters, phpMyAdmin puede fallar.
+--    - Por eso en nuestros pasos dejamos el PROCEDURE en un archivo separado y con DELIMITER.
+
+-- B) Error que viste: "#1558 - Column count of mysql.proc is wrong..."
+--    - ¿Qué significa? No es un error del script. Significa que la tabla del sistema
+--      `mysql.proc` tiene una estructura antigua (se creó con una versión vieja de MariaDB/MySQL)
+--      y tu servidor actual espera otra versión. Esto suele ocurrir tras actualizar MariaDB/MySQL.
+--    - Resultado práctico: las tablas que creaste (users, doctors, etc.) sí se crearon bien,
+--      pero la creación del PROCEDURE falló porque el servidor no puede almacenar procedimientos
+--      en la estructura antigua de `mysql.proc`.
+--
+-- C) Cómo solucionarlo (opciones)
+--    Opción 1 — (Recomendado si puedes) Ejecutar mysql_upgrade en Linux:
+--        sudo mysql_upgrade -u root -p
+--      Esto actualiza las tablas del sistema (incluyendo mysql.proc) al formato correcto.
+--      Después de ejecutar mysql_upgrade reinicia el servidor MariaDB/MySQL y vuelve a crear el PROCEDURE.
+--
+--    Opción 2 — Si no puedes ejecutar mysql_upgrade (por permisos o por ser hosting compartido):
+--      - Puedes IGNORAR el error si no necesitas el PROCEDURE inmediatamente.
+--        El resto de la base de datos funciona bien para desarrollar y probar.
+--      - Si en un futuro necesitas ejecutar procedimientos, considera:
+--         * Usar la terminal/CLI en vez de phpMyAdmin.
+--         * O pedir al administrador del servidor que ejecute mysql_upgrade o actualice el servidor.
+--
+--    Opción 3 — Reinstalación / cambio de versión:
+--      - En casos extremos, la solución es alinear las versiones (instalar la versión de MariaDB
+--        que corresponda o migrar correctamente). Esto es más avanzado y generalmente no es necesario
+--        para proyectos de estudiantes.
+--
+-- D) Diferencias Linux vs Windows
+--    - En Linux (especialmente con XAMPP o MariaDB mediante paquetes), a veces el servidor
+--      llega con estructuras antiguas tras una actualización — por eso verás errores como #1558.
+--    - En Windows (XAMPP para Windows) suele ser más sencillo si instalaste XAMPP todo de cero,
+--      porque las versiones están emparejadas y no hay tablas "antiguas" heredadas. Aun así, no es
+--      una regla absoluta: depende de cómo se instaló y si hubo actualizaciones.
+--
+-- E) Tamaño de archivos y límites de phpMyAdmin
+--    - phpMyAdmin puede tener un límite de tamaño de subida (upload_max_filesize y post_max_size en php.ini).
+--    - Si tu archivo .sql es grande, usa la terminal:
+--         mysql -u root -p medilink_db < medilink_db_full.sql
+--    - Alternativa: comprime el archivo (.gz) y phpMyAdmin acepta archivos gzip más grandes en muchas configuraciones.
+--
+-- F) Seguridad / buenas prácticas (rápido)
+--    - Evitar usar contraseñas en texto plano en producción. Para el proyecto personal está bien.
+--    - Hacer backup antes de correr scripts que modifican estructuras del sistema.
+--    - Si vas a compartir tu base de datos o subirla a un servidor, elimina datos sensibles.
+--
+-- G) Cómo verificar que todo quedó bien
+--    1. En phpMyAdmin selecciona la base medilink_db y revisa la lista de tablas (deberías ver 8 tablas principales).
+--    2. Ejecuta: SELECT COUNT(*) FROM users; para ver si los inserts se aplicaron.
+--    3. Para ver la versión del servidor y confirmar compatibilidad:
+--         SELECT VERSION();
+--       o en terminal:
+--         mysql -u root -p -e "SELECT VERSION();"
+--
+-- H) Qué hacer si el PROCEDURE no se crea incluso después de mysql_upgrade
+--    - Revisa el mensaje de error exacto.
+--    - Intenta crear el procedimiento desde la terminal (muchas veces da más información).
+--    - Como último recurso, puedes:
+--       * Reescribir la lógica del procedimiento en la capa de aplicación (PHP/JS) como consulta dinámica.
+--       * O usar funciones definidas por el usuario (UDF) si el servidor lo permite — esto es avanzado.
+--
+-- EJEMPLO RÁPIDO DE COMANDOS EN LÍNEA (Linux)
+-- 1) Crear/ejecutar la estructura y vistas:
+--    mysql -u root -p < /ruta/al/medilink_db_full.sql
+--
+-- 2) Insertar datos de ejemplo:
+--    mysql -u root -p medilink_db < /ruta/al/medilink_db_insert_simple.sql
+--
+-- 3) (Opcional) Crear el procedimiento:
+--    mysql -u root -p medilink_db < /ruta/al/sp_get_available_slots.sql
+--
+-- 4) Comprobar versión y diagnosticar:
+--    mysql -u root -p -e "SELECT VERSION();"
+--
+-- 5) Ejecutar mysql_upgrade (si hace falta):
+--    sudo mysql_upgrade -u root -p
+--    sudo systemctl restart mariadb    # o mysqld según tu distro
+--
+-- CONCLUSIÓN PARA ESTUDIANTES
+-- - Importa primero la estructura (medilink_db_full.sql), luego los datos (medilink_db_insert_simple.sql).
+-- - El procedimiento sp_get_available_slots es opcional y puede fallar si el servidor tiene tablas del sistema desactualizadas.
+-- - Si ves el error #1558: no entres en pánico. Para proyectos personales pueden ignorarlo temporalmente.
+--   Si necesitas el procedimiento en serio, ejecuta mysql_upgrade en Linux o pide soporte al administrador.
+--
+-- ¡Listo! Con esto deberías poder importar y explorar la base de datos sin mayor problema.
+-- Cualquier duda, comparte el mensaje de error exacto y lo resolvemos paso a paso.
+--
