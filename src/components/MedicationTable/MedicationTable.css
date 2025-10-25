@@ -1,0 +1,311 @@
+/* Estilos para MedicationTable */
+.medication-table-container {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #007bff;
+  margin-bottom: 25px;
+}
+
+.medication-form {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.medication-form h4 {
+  color: #007bff;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.medication-form h4:before {
+  content: '💊';
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1.2fr 1fr auto;
+  gap: 15px;
+  align-items: end;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.add-btn {
+  background-color: #28a745;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: fit-content;
+}
+
+.add-btn:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.medications-table {
+  margin-top: 20px;
+}
+
+.medications-table h4 {
+  color: #007bff;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.medications-table h4:before {
+  content: '📋';
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+  margin: 0;
+  background: white;
+}
+
+.table thead th {
+  background-color: #007bff;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 15px 12px;
+  border: none;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.table tbody td {
+  padding: 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 14px;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.medication-name {
+  font-weight: 600;
+  color: #495057;
+}
+
+.via-badge {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.via-badge[data-via="IV"] {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.via-badge[data-via="IM"] {
+  background-color: #cce7ff;
+  color: #004085;
+}
+
+.via-badge[data-via="VO"] {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+.action-buttons .btn {
+  padding: 5px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  min-width: 30px;
+}
+
+.btn-outline-primary {
+  color: #007bff;
+  border-color: #007bff;
+  background: white;
+}
+
+.btn-outline-primary:hover {
+  background: #007bff;
+  color: white;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+  background: white;
+}
+
+.btn-outline-danger:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-success {
+  background: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+/* Form controls en tabla */
+.form-control-sm {
+  padding: 4px 8px;
+  font-size: 13px;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+}
+
+.form-control-sm:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .form-group:last-child {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .medication-table-container {
+    padding: 15px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .table-responsive {
+    font-size: 12px;
+  }
+  
+  .table thead th,
+  .table tbody td {
+    padding: 8px 6px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 3px;
+  }
+  
+  .action-buttons .btn {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 576px) {
+  .table thead {
+    display: none;
+  }
+  
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+  }
+  
+  .table tr {
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .table td {
+    border: none;
+    padding: 10px;
+    text-align: left;
+    position: relative;
+    padding-left: 100px;
+  }
+  
+  .table td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    font-weight: 600;
+    color: #007bff;
+    width: 80px;
+    font-size: 12px;
+  }
+  
+  .table td:nth-child(1):before { content: "Medicamento:"; }
+  .table td:nth-child(2):before { content: "Dosis:"; }
+  .table td:nth-child(3):before { content: "Frecuencia:"; }
+  .table td:nth-child(4):before { content: "Vía:"; }
+  .table td:nth-child(5):before { content: "Duración:"; }
+  .table td:nth-child(6):before { content: "Acciones:"; }
+  
+  .action-buttons {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+}

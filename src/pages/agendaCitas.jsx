@@ -24,30 +24,37 @@ const AgendaCitas = () => {
   
   // Usuario actual
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [userData, setUserData] = useState(null)
+  const [medicosRegistrados, setMedicosRegistrados] = useState({})
 
-  // Datos de lugares y profesionales (simulados)
+  // Datos de lugares 
   const places = [
     { id: 'confama', name: 'CIS Confama Manrique' },
     { id: 'cis_centro', name: 'CIS Central - Medellín' },
     { id: 'cis_norte', name: 'CIS Zona Norte - Bello' }
   ]
 
-  const professionals = {
-    'confama': [
-      { id: '101', name: 'Dr. David González (Medicina General)' },
-      { id: '102', name: 'Dra. Sofía Rojas (Pediatría)' }
-    ],
-    'cis_centro': [
-      { id: '201', name: 'Dr. Camilo Giraldo (Medicina Familiar)' },
-      { id: '202', name: 'Dra. Laura Vélez (Nutrición)' }
-    ],
-    'cis_norte': [
-      { id: '301', name: 'Dr. Carlos Moreno (Medicina General)' },
-      { id: '302', name: 'Dra. Ana Gómez (Cardiología)' }
-    ],
-    'default': [
-      { id: '999', name: 'Dra. Carolina Diaz (Médico General)' }
-    ]
+  // Cargar médicos registrados desde localStorage
+  const cargarMedicosRegistrados = () => {
+    const medicos = JSON.parse(localStorage.getItem('medicos') || '[]')
+    const medicosPorSede = {}
+    
+    // Agrupar médicos por sede
+    medicos.forEach(medico => {
+      if (!medicosPorSede[medico.sede]) {
+        medicosPorSede[medico.sede] = []
+      }
+      medicosPorSede[medico.sede].push({
+        id: medico.identificacion,
+        name: `Dr(a). ${medico.nombre} ${medico.apellido} (${medico.especialidad})`,
+        identificacion: medico.identificacion,
+        especialidad: medico.especialidad
+      })
+    })
+    
+    // No usar médicos por defecto - solo mostrar médicos registrados
+    
+    setMedicosRegistrados(medicosPorSede)
   }
 
   useEffect(() => {
@@ -61,6 +68,31 @@ const AgendaCitas = () => {
     }
     
     setCurrentUserId(storedUserId)
+    
+    // Cargar datos del usuario desde localStorage
+    if (storedUserId) {
+      const currentUserData = JSON.parse(localStorage.getItem('currentUserData') || 'null');
+      if (currentUserData) {
+        setUserData(currentUserData);
+      } else {
+        // Fallback: buscar en registeredUsers
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        const user = registeredUsers.find(u => u.userId === storedUserId);
+        if (user) {
+          const userData = {
+            id: user.userId,
+            firstName: user.nombre,
+            lastName: user.apellido,
+            email: user.email,
+            phone: user.telefono,
+            tipoId: user.tipoId
+          };
+          setUserData(userData);
+        }
+      }
+    }
+    
+    cargarMedicosRegistrados()
   }, [navigate])
 
   const handleLogout = () => {
@@ -106,7 +138,7 @@ const AgendaCitas = () => {
   }
 
   const getProfessionalsForPlace = (placeId) => {
-    return professionals[placeId] || professionals['default']
+    return medicosRegistrados[placeId] || []
   }
 
   const handleConfirmAppointment = (time) => {
@@ -115,6 +147,10 @@ const AgendaCitas = () => {
       return
     }
 
+    // Obtener información completa del médico seleccionado
+    const medicos = getProfessionalsForPlace(selectedPlace)
+    const medicoSeleccionado = medicos.find(m => m.id === selectedProfessional)
+
     // Crear datos de la cita
     const appointmentData = {
       id: Date.now().toString(),
@@ -122,6 +158,8 @@ const AgendaCitas = () => {
       hora: time,
       lugar: selectedPlace,
       medico: selectedProfessional,
+      medicoNombre: medicoSeleccionado?.name || 'Médico no encontrado',
+      medicoEspecialidad: medicoSeleccionado?.especialidad || 'Especialidad no definida',
       paciente: currentUserId,
       estado: 'confirmada',
       tipo: 'CONSULTA MEDICINA GENERAL SALUD (CITA PRESENCIAL)',
@@ -132,6 +170,11 @@ const AgendaCitas = () => {
     const userAppointments = JSON.parse(localStorage.getItem(`citasProgramadas_${currentUserId}`) || '[]')
     userAppointments.push(appointmentData)
     localStorage.setItem(`citasProgramadas_${currentUserId}`, JSON.stringify(userAppointments))
+
+    // NUEVA: Guardar también en citas generales para que los médicos las vean
+    const allAppointments = JSON.parse(localStorage.getItem('citas') || '[]')
+    allAppointments.push(appointmentData)
+    localStorage.setItem('citas', JSON.stringify(allAppointments))
 
     // Marcar slot como ocupado
     const occupiedSlots = JSON.parse(localStorage.getItem('occupiedSlots') || '{}')
@@ -152,18 +195,19 @@ const AgendaCitas = () => {
     setSelectedProfessional('')
   }
 
-  const handleCancelAppointment = (appointmentId) => {
+  const handleCancelAppointment = () => {
     // La lógica ya está en el componente AppointmentsList
-    console.log(`Cita ${appointmentId} cancelada`)
   }
 
   return (
     <div className="container my-5">
       <h1 className="text-center mb-4 main-title">Portal de Agendamiento de Citas</h1>
       
-      <button className="btn btn-danger cerrar-sesion" onClick={handleLogout}>
-        Cerrar sesión
-      </button>
+      <div className="d-flex justify-content-end mb-3">
+        <button className="btn btn-danger cerrar-sesion" onClick={handleLogout}>
+          Cerrar sesión
+        </button>
+      </div>
 
       <div className="card shadow-sm mb-4 info-card">
         <div className="card-header bg-primary text-white info-header">
@@ -171,14 +215,25 @@ const AgendaCitas = () => {
         </div>
         <div className="card-body">
           <div className="row afiliado-info">
-            <div className="col-md-4">
-              <strong>Afiliado:</strong> <span>CC {currentUserId || 'N/A'}</span>
+            <div className="col-md-3">
+              <strong>Afiliado:</strong> <span>CC {userData?.id || currentUserId || 'N/A'}</span>
             </div>
+            <div className="col-md-3">
+              <strong>Nombres:</strong> <span>{userData?.firstName || 'N/A'}</span>
+            </div>
+            <div className="col-md-3">
+              <strong>Apellidos:</strong> <span>{userData?.lastName || 'N/A'}</span>
+            </div>
+            <div className="col-md-3">
+              <strong>Email:</strong> <span>{userData?.email || 'N/A'}</span>
+            </div>
+          </div>
+          <div className="row afiliado-info mt-2">
             <div className="col-md-4">
+              <strong>Teléfono:</strong> <span>{userData?.phone || 'N/A'}</span>
+            </div>
+            <div className="col-md-8">
               <strong>Servicio:</strong> CONSULTA MEDICINA GENERAL SALUD (CITA PRESENCIAL)
-            </div>
-            <div className="col-md-4">
-              <strong>Médico de familia:</strong> Dr. Juan Pérez
             </div>
           </div>
         </div>
@@ -236,7 +291,7 @@ const AgendaCitas = () => {
               </div>
               
               <div className="row">
-                <div className="col-lg-4 col-md-12 mb-4">
+                <div className="col-lg-5 col-md-12 mb-4">
                   <Calendar
                     currentMonth={currentMonth}
                     currentYear={currentYear}
@@ -247,7 +302,7 @@ const AgendaCitas = () => {
                   />
                 </div>
                 
-                <div className="col-lg-8 col-md-12">
+                <div className="col-lg-7 col-md-12">
                   <TimeSlots
                     selectedDate={selectedDate}
                     selectedPlace={selectedPlace}

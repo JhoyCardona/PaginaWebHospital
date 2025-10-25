@@ -1,0 +1,175 @@
+@import url('./mainPage.css'); 
+
+.historia-clinica-background {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.header-card {
+    background: linear-gradient(135deg, var(--color-highlight-blue), #0056b3);
+    color: white;
+    border: none;
+}
+
+.header-card .card-body {
+    padding: 2rem;
+}
+
+.paciente-avatar {
+    width: 70px;
+    height: 70px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.paciente-name {
+    color: white;
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.paciente-info {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.historia-card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-pills .nav-link {
+    color: var(--color-primary-blue);
+    font-weight: 500;
+    border-radius: 25px;
+    padding: 0.75rem 1.5rem;
+    margin-right: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: var(--color-highlight-blue);
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--color-highlight-blue);
+    color: white;
+}
+
+.form-label {
+    color: var(--color-primary-blue);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-highlight-blue);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.orden-card,
+.medicamento-card {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    transition: box-shadow 0.3s ease;
+}
+
+.orden-card:hover,
+.medicamento-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-primary {
+    background-color: var(--color-primary-blue);
+    border-color: var(--color-primary-blue);
+    border-radius: 25px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-secondary-blue);
+    border-color: var(--color-secondary-blue);
+}
+
+.btn-success {
+    background-color: var(--color-highlight-blue);
+    border-color: var(--color-highlight-blue);
+    border-radius: 25px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-success:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn-outline-danger {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.tab-content {
+    padding: 1.5rem 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .paciente-name {
+        font-size: 1.5rem;
+    }
+    
+    .paciente-avatar {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .nav-pills .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-primary,
+    .btn-success {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .tab-content {
+        padding: 1rem 0;
+    }
+    
+    .form-control,
+    .form-select {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+}

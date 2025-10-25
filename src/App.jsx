@@ -3,9 +3,13 @@ import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainPage from './pages/mainPage'
 import LoginPage from './pages/loginPage'
+import LoginMedicos from './pages/loginMedicos'
+import DashboardMedico from './pages/dashboardMedico'
+import AtencionMedica from './pages/atencionMedica'
+import HistoriaClinica from './pages/historiaClinica'
+import PerfilPaciente from './pages/perfilPaciente'
 import AgendaCitas from './pages/agendaCitas'
 import SetupUsers from './pages/setupUsers'
-import './App.css'
 
 function App() {
   return (
@@ -15,6 +19,18 @@ function App() {
           <Routes>
             <Route path="/" element={<MainPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/login-medicos" element={<LoginMedicos />} />
+            <Route path="/dashboard-medico" element={<DashboardMedico />} />
+            <Route path="/atencion-medica/:citaId" element={<AtencionMedica />} />
+            <Route path="/historia-clinica/:pacienteId" element={<HistoriaClinica />} />
+            <Route 
+              path="/perfil-paciente/:pacienteId" 
+              element={
+                <ProtectedRoute>
+                  <PerfilPaciente />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="/setup-users" element={<SetupUsers />} />
             <Route 
               path="/agenda-citas" 

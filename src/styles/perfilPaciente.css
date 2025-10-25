@@ -1,0 +1,239 @@
+/* Importar estilos base */
+@import url('./mainPage.css');
+
+/* Background principal */
+.perfil-paciente-background {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px 0;
+}
+
+/* Header Card */
+.header-card {
+  border: none;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.paciente-avatar {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.paciente-name {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.paciente-info {
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin-bottom: 0;
+}
+
+/* Main Profile Card */
+.perfil-card {
+  border: none;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* Tabs personalizados */
+.nav-pills .nav-link {
+  border-radius: 25px;
+  margin-right: 10px;
+  padding: 10px 20px;
+  color: #6c757d;
+  border: 2px solid transparent;
+  background: rgba(108, 117, 125, 0.1);
+  transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link.active {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border-color: #007bff;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.nav-pills .nav-link:hover:not(.active) {
+  background: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+  border-color: #007bff;
+}
+
+/* Historia clínica items */
+.historia-item {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.historia-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.historia-item .card-header {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.historia-item .card-body {
+  padding: 1.5rem;
+}
+
+/* Estados vacíos */
+.text-center.py-5 {
+  padding: 3rem 1rem !important;
+}
+
+.text-center.py-5 i {
+  opacity: 0.6;
+}
+
+/* Tabla de citas */
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  font-weight: 600;
+  padding: 1rem;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef;
+}
+
+/* Badges personalizados */
+.badge {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 15px;
+}
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, #007bff, #0056b3) !important;
+}
+
+.badge.bg-success {
+  background: linear-gradient(135deg, #007bff, #0056b3) !important;
+}
+
+.badge.bg-secondary {
+  background: linear-gradient(135deg, #6c757d, #495057) !important;
+}
+
+/* Botones */
+.btn-outline-primary {
+  border-color: #007bff;
+  color: #007bff;
+  border-radius: 25px;
+  padding: 8px 20px;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-outline-primary.btn-sm {
+  padding: 5px 15px;
+  font-size: 0.85rem;
+}
+
+/* Alertas flotantes */
+.alert.position-fixed {
+  max-width: 500px;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .perfil-paciente-background {
+    padding: 10px 0;
+  }
+  
+  .paciente-avatar {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .paciente-name {
+    font-size: 1.3rem;
+  }
+  
+  .nav-pills .nav-link {
+    padding: 8px 15px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+  
+  .historia-item .card-body {
+    padding: 1rem;
+  }
+  
+  .table-responsive {
+    font-size: 0.9rem;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-card,
+.perfil-card {
+  animation: fadeInUp 0.5s ease;
+}
+
+.historia-item {
+  animation: fadeInUp 0.5s ease;
+  animation-fill-mode: both;
+}
+
+.historia-item:nth-child(1) { animation-delay: 0.1s; }
+.historia-item:nth-child(2) { animation-delay: 0.2s; }
+.historia-item:nth-child(3) { animation-delay: 0.3s; }
+.historia-item:nth-child(4) { animation-delay: 0.4s; }
+.historia-item:nth-child(5) { animation-delay: 0.5s; }

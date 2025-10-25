@@ -1,0 +1,91 @@
+@import url('./mainPage.css'); 
+
+.login-medicos-background {
+    background: linear-gradient(135deg, var(--color-primary-blue), var(--color-secondary-blue));
+    min-height: 100vh;
+}
+
+.login-card {
+    max-width: 480px; 
+    width: 100%;
+    border-radius: 15px; 
+    border: none;
+    background-color: white;
+}
+
+.login-card .form-control-lg,
+.login-card .form-select {
+    height: calc(3rem + 2px); 
+    font-size: 1.1rem;
+    border-radius: 8px;
+    border-color: #ced4da;
+    padding: 0.75rem 1rem;
+}
+
+.btn-login-medico {
+    background-color: var(--color-primary-blue); 
+    border-color: var(--color-primary-blue);
+    color: white;
+    font-weight: bold;
+    padding: 0.75rem 2rem;
+    transition: background-color 0.3s;
+}
+
+.btn-login-medico:hover {
+    background-color: var(--color-secondary-blue); 
+    border-color: var(--color-secondary-blue);
+}
+
+.btn-register-medico {
+    background-color: var(--color-highlight-blue); 
+    border-color: var(--color-highlight-blue);
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn-register-medico:hover {
+    background-color: #0056b3; 
+    border-color: #0056b3;
+}
+
+.link-register-medico {
+    color: var(--color-highlight-blue);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: color 0.3s;
+}
+
+.link-register-medico:hover {
+    color: var(--color-primary-blue);
+}
+
+.card-title {
+    color: var(--color-primary-blue);
+}
+
+.modal-title {
+    color: var(--color-primary-blue);
+}
+
+.modal-header {
+    border-bottom: 2px solid var(--color-highlight-blue);
+}
+
+.form-label {
+    color: var(--color-primary-blue);
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .login-card {
+        margin: 1rem;
+        max-width: none;
+    }
+    
+    .modal-dialog {
+        margin: 1rem;
+    }
+}

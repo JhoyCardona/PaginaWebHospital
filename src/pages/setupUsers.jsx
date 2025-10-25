@@ -5,17 +5,19 @@ const SetupUsers = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Crear usuarios de prueba
-    const users = [
-      { userId: '1234', password: '123456', name: 'Usuario Demo 1' },
-      { userId: '123455', password: 'pass1234', name: 'Usuario Admin' },
-      { userId: '5678', password: 'clave123', name: 'Usuario Demo 2' }
-    ]
+    // Solo crear arrays vacíos para que el sistema pueda funcionar
+    const users = []
     
+    // Solo crear arrays vacíos para que el sistema pueda funcionar
+    const medicos = []
+
+    // Solo crear arrays vacíos para que el sistema pueda funcionar
+    const historiasClinicas = [];
+
     // Guardar en localStorage
     localStorage.setItem('registeredUsers', JSON.stringify(users))
-    
-    console.log('Usuarios registrados:', users)
+    localStorage.setItem('medicos', JSON.stringify(medicos))
+    localStorage.setItem('historiasClinicas', JSON.stringify(historiasClinicas))
     
     // Mostrar confirmación y redirigir después de 3 segundos
     setTimeout(() => {
@@ -34,13 +36,17 @@ const SetupUsers = () => {
                 <span className="visually-hidden">Loading...</span>
               </div>
               
-              <h2 className="text-success">✅ Usuarios creados exitosamente!</h2>
-              <h3>Credenciales disponibles:</h3>
-              <ul className="list-unstyled">
-                <li><strong>ID:</strong> 1234 | <strong>Password:</strong> 123456</li>
-                <li><strong>ID:</strong> 123455 | <strong>Password:</strong> pass1234</li>
-                <li><strong>ID:</strong> 5678 | <strong>Password:</strong> clave123</li>
-              </ul>
+              <h2 className="text-success">✅ Sistema inicializado correctamente!</h2>
+              
+              <div className="alert alert-info">
+                <h5>📋 Sistema listo para usar</h5>
+                <p>Los usuarios y médicos se registrarán a medida que usen el sistema:</p>
+                <ul>
+                  <li><strong>Pacientes:</strong> Pueden registrarse desde el formulario de login</li>
+                  <li><strong>Médicos:</strong> Pueden registrarse desde el portal médico</li>
+                  <li><strong>Historias médicas:</strong> Se crearán durante las consultas</li>
+                </ul>
+              </div>
               
               <p className="mt-3">
                 <button 

@@ -1,7 +1,7 @@
 :root {
     --color-primary-blue: #004c99; 
     --color-secondary-blue: #007bff; 
-    --color-highlight-green: #5cb85c; 
+    --color-highlight-blue: #007bff; 
     --color-accent-yellow: #ffc107; 
     --color-text-light: #f8f9fa; 
 }
@@ -19,7 +19,7 @@
     color: var(--color-primary-blue); 
 }
 .logo-subtext {
-    color: var(--color-highlight-green); 
+    color: var(--color-highlight-blue); 
     font-size: 0.8em; 
 }
 
@@ -28,11 +28,11 @@
     font-weight: 500;
 }
 .custom-navbar .nav-link:hover {
-    color: var(--color-highlight-green); 
+    color: var(--color-highlight-blue); 
 }
 
 .nav-link-highlight {
-    background-color: var(--color-highlight-green); 
+    background-color: var(--color-highlight-blue); 
     color: var(--color-text-light) !important; 
     border-radius: 5px;
     padding-left: 15px !important;
@@ -40,7 +40,19 @@
     transition: background-color 0.3s;
 }
 .nav-link-highlight:hover {
-    background-color: #4cae4c; 
+    background-color: #0056b3; 
+}
+
+.nav-link-medicos {
+    background-color: var(--color-primary-blue); 
+    color: var(--color-text-light) !important; 
+    border-radius: 5px;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    transition: background-color 0.3s;
+}
+.nav-link-medicos:hover {
+    background-color: var(--color-secondary-blue);
 }
 
 .main-header {
@@ -69,12 +81,12 @@
 }
 
 .carousel-caption .btn-success {
-    background-color: var(--color-highlight-green);
-    border-color: var(--color-highlight-green);
+    background-color: var(--color-highlight-blue);
+    border-color: var(--color-highlight-blue);
 }
 .carousel-caption .btn-success:hover {
-    background-color: #4cae4c;
-    border-color: #4cae4c;
+    background-color: #0056b3;
+    border-color: #0056b3;
 }
 
 .notices-section {
@@ -86,7 +98,7 @@
 .notices-title {
     font-weight: 700;
     color: #333; 
-    border-bottom: 3px solid var(--color-highlight-green); 
+    border-bottom: 3px solid var(--color-highlight-blue); 
     display: inline-block;
     padding-bottom: 5px;
 }
@@ -116,7 +128,7 @@
 }
 
 .notice-link {
-    color: var(--color-highlight-green); 
+    color: var(--color-highlight-blue); 
     font-weight: bold;
     text-decoration: none;
     transition: color 0.3s ease;
@@ -127,7 +139,7 @@
 }
 
 .site-footer {
-    background-color: #9dc996; 
+    background-color: #b3d4ff; 
     color: #2f2d2d; 
     padding: 50px 0 20px 0;
     font-size: 0.9rem;
@@ -137,7 +149,7 @@
     color: #333;
     font-weight: bold;
     margin-bottom: 15px;
-    border-bottom: 2px solid var(--color-highlight-green); 
+    border-bottom: 2px solid var(--color-highlight-blue); 
     display: inline-block;
     padding-bottom: 5px;
 }
@@ -189,7 +201,7 @@
 }
 
 .social-icons a:hover {
-    background-color: var(--color-highlight-green);
+    background-color: var(--color-highlight-blue);
 }
 
 .footer-bottom {

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 
 const TimeSlots = ({ 
   selectedDate, 
@@ -6,7 +6,6 @@ const TimeSlots = ({
   selectedProfessional, 
   onConfirmAppointment 
 }) => {
-  // Datos simulados de horarios disponibles
   const availableSlots = [
     { time: '08:00', available: true },
     { time: '08:30', available: true },
@@ -67,10 +66,10 @@ const TimeSlots = ({
   }
 
   return (
-    <div className="available-times-container">
+    <div className="time-slots-container">
       <div className="card">
         <div className="card-header time-header text-center">
-          <h5 className="mb-0" id="selectedDateHeader">
+          <h5 className="mb-0">
             Horarios para {formatDate(selectedDate, new Date().getMonth(), new Date().getFullYear())}
           </h5>
         </div>

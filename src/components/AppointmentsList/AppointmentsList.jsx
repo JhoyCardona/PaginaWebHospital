@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import 'jspdf-autotable'
+import PDFService from '../../services/pdfServiceWorking';
 
 const AppointmentsList = ({ userId, onCancelAppointment }) => {
   const [appointments, setAppointments] = useState([])
@@ -14,11 +16,190 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
     loadAppointments()
   }, [userId])
 
+  // Función para verificar si una cita ha sido atendida
+  const isAppointmentAttended = (appointmentId) => {
+    const medicalHistories = JSON.parse(localStorage.getItem('medicalHistories') || '[]')
+    return medicalHistories.some(history => history.citaId === appointmentId)
+  }
+
+  // Función para generar y descargar PDF con TABLAS usando el PDFService correcto
+  const generateMedicalPDF = (appointmentId) => {
+    const medicalHistories = JSON.parse(localStorage.getItem('medicalHistories') || '[]')
+    const medicalHistory = medicalHistories.find(history => history.citaId === appointmentId)
+    
+    if (!medicalHistory) {
+      alert('No se encontró información médica para esta cita.')
+      return
+    }
+
+    const appointment = appointments.find(apt => apt.id === appointmentId)
+    if (!appointment) {
+      alert('No se encontró información de la cita.')
+      return
+    }
+
+    try {
+      // Obtener datos completos del paciente
+      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      const pacienteCompleto = registeredUsers.find(user => 
+        user.identificacion === userId || user.numId === userId || user.userId === userId
+      );
+      const nombreCompleto = pacienteCompleto ? 
+        `${pacienteCompleto.nombres || pacienteCompleto.nombre} ${pacienteCompleto.apellidos || pacienteCompleto.apellido}` : 
+        `Paciente (${userId})`;
+      
+      // TRANSFORMAR DATOS AL FORMATO CORRECTO PARA TABLAS
+      const datosParaPDF = {
+        // Información básica
+        motivoConsulta: medicalHistory.motivoConsulta || '',
+        historiaClinica: medicalHistory.antecedentesMedicos || '',
+        diagnostico: medicalHistory.diagnostico || '',
+        recomendaciones: medicalHistory.recomendaciones || '',
+        observaciones: medicalHistory.observaciones || '',
+        
+        // Información del médico - Lógica robusta
+        medico: medicalHistory.medico ? {
+          identificacion: medicalHistory.medico.identificacion || 'No disponible',
+          nombre: medicalHistory.medico.nombre || 'No disponible',
+          apellido: medicalHistory.medico.apellido || '',
+          especialidad: medicalHistory.medico.especialidad || 'No especificada',
+          sede: medicalHistory.medico.sede || 'No especificada'
+        } : {
+          identificacion: 'No disponible',
+          nombre: 'No disponible',
+          apellido: '',
+          especialidad: 'No especificada',
+          sede: 'No especificada'
+        },
+        
+        // Información de la cita
+        paciente: nombreCompleto,
+        documento: userId,
+        fechaCita: appointment.fecha,
+        horaCita: appointment.hora,
+        fechaAtencion: medicalHistory.fechaAtencion || new Date().toISOString(),
+        citaId: appointmentId,
+        
+        // INICIALIZAR ARRAYS PARA TABLAS
+        ordenesClinicas: {
+          laboratorios: [],
+          imagenesDiagnosticas: [],
+          interconsultas: []
+        },
+        medicamentos: [],
+        
+        // Incapacidad - obtener de la historia médica
+        incapacidadMedica: medicalHistory.incapacidadMedica || { tieneIncapacidad: false }
+      };
+      
+      // PARSEAR ÓRDENES MÉDICAS DESDE STRING A ARRAYS PARA TABLAS
+      if (medicalHistory.ordenesMedicas && typeof medicalHistory.ordenesMedicas === 'string') {
+        const ordenesString = medicalHistory.ordenesMedicas.split('; ');
+        ordenesString.forEach(ordenString => {
+          const parts = ordenString.match(/^(\d+)\s-\s(.+)$/);
+          if (parts) {
+            const codigo = parts[1];
+            const descripcion = parts[2];
+            
+            // Clasificar por tipo de código CUPS
+            if (codigo.startsWith('90') || codigo.startsWith('91') || codigo.startsWith('92')) {
+              // Códigos de laboratorio
+              datosParaPDF.ordenesClinicas.laboratorios.push({ codigo, descripcion });
+            } else if (codigo.startsWith('87') || codigo.startsWith('88')) {
+              // Códigos de imágenes diagnósticas
+              datosParaPDF.ordenesClinicas.imagenesDiagnosticas.push({ codigo, descripcion });
+            } else if (codigo.startsWith('89')) {
+              // Códigos de interconsultas - extraer especialidad de la descripción
+              let especialidad = descripcion;
+              if (descripcion.includes('por ')) {
+                especialidad = descripcion.split('por ')[1];
+                // Capitalizar primera letra
+                especialidad = especialidad.charAt(0).toUpperCase() + especialidad.slice(1);
+              }
+              datosParaPDF.ordenesClinicas.interconsultas.push({ 
+                especialidad: especialidad, 
+                motivo: 'Interconsulta médica',
+                urgencia: 'Normal' 
+              });
+            }
+          }
+        });
+      }
+      
+      // PARSEAR MEDICAMENTOS DESDE STRING A ARRAY PARA TABLAS
+      if (medicalHistory.medicamentos && typeof medicalHistory.medicamentos === 'string') {
+        const medicamentosString = medicalHistory.medicamentos.split('; ');
+        datosParaPDF.medicamentos = medicamentosString.map(medString => {
+          const match = medString.match(/^(.+?)\s(.+?)\s(.+?)\s\((.+?)\)\s-\s(.+)$/);
+          if (match) {
+            return {
+              nombre: match[1].trim(),
+              dosis: match[2].trim(),
+              frecuencia: match[3].trim(),
+              via: match[4].trim(),
+              duracion: match[5].trim()
+            };
+          } else {
+            return {
+              nombre: medString,
+              dosis: '',
+              frecuencia: '',
+              via: '',
+              duracion: ''
+            };
+          }
+        });
+      }
+
+      // PARSEAR INCAPACIDAD DESDE STRING A OBJETO PARA PDF
+      if (medicalHistory.incapacidadMedica && typeof medicalHistory.incapacidadMedica === 'string' && medicalHistory.incapacidadMedica.trim() !== '') {
+        // Formato esperado: "X días - Motivo (YYYY-MM-DD a YYYY-MM-DD)" o "X días -  (YYYY-MM-DD a YYYY-MM-DD)"
+        const incapacidadMatch = medicalHistory.incapacidadMedica.match(/^(\d+)\s*días\s*-\s*(.*?)\s*\((.+?)\s*a\s*(.+?)\)$/);
+        if (incapacidadMatch) {
+          let motivo = incapacidadMatch[2].trim();
+          if (motivo === '') {
+            motivo = 'Incapacidad médica'; // Motivo por defecto si está vacío
+          }
+          datosParaPDF.incapacidadMedica = {
+            tieneIncapacidad: true,
+            dias: incapacidadMatch[1].trim(),
+            motivo: motivo,
+            fechaInicio: incapacidadMatch[3].trim(),
+            fechaFin: incapacidadMatch[4].trim()
+          };
+        } else {
+          // Si no coincide el formato, intentar parsear lo que se pueda
+          datosParaPDF.incapacidadMedica = {
+            tieneIncapacidad: true,
+            dias: '1',
+            motivo: medicalHistory.incapacidadMedica,
+            fechaInicio: new Date().toISOString().split('T')[0],
+            fechaFin: new Date().toISOString().split('T')[0]
+          };
+        }
+      } else if (medicalHistory.incapacidadMedica && typeof medicalHistory.incapacidadMedica === 'object') {
+        datosParaPDF.incapacidadMedica = medicalHistory.incapacidadMedica;
+      }
+      
+      
+      // USAR EL PDFService CORRECTO CON TABLAS
+      PDFService.downloadMedicalReport(datosParaPDF);
+      
+    } catch {
+      alert('Error al generar el PDF. Por favor, inténtelo de nuevo.')
+    }
+  }
+
   const handleCancelAppointment = (appointmentId) => {
     if (window.confirm('¿Está seguro de que desea cancelar esta cita?')) {
       // Eliminar de las citas del usuario
       const updatedAppointments = appointments.filter(apt => apt.id !== appointmentId)
       localStorage.setItem(`citasProgramadas_${userId}`, JSON.stringify(updatedAppointments))
+      
+      // NUEVA: Eliminar también de las citas generales
+      const allAppointments = JSON.parse(localStorage.getItem('citas') || '[]')
+      const updatedAllAppointments = allAppointments.filter(apt => apt.id !== appointmentId)
+      localStorage.setItem('citas', JSON.stringify(updatedAllAppointments))
       
       // Eliminar del slot ocupado
       const occupiedSlots = JSON.parse(localStorage.getItem('occupiedSlots') || '{}')
@@ -55,16 +236,16 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
   }
 
   const getProfessionalName = (professionalId) => {
-    const professionals = {
-      '101': 'Dr. David González (Medicina General)',
-      '102': 'Dra. Sofía Rojas (Pediatría)',
-      '201': 'Dr. Camilo Giraldo (Medicina Familiar)',
-      '202': 'Dra. Laura Vélez (Nutrición)',
-      '301': 'Dr. Carlos Moreno (Medicina General)',
-      '302': 'Dra. Ana Gómez (Cardiología)',
-      '999': 'Dra. Carolina Diaz (Médico General)'
+    // Primero, intentar obtener el médico de los datos reales registrados
+    const medicos = JSON.parse(localStorage.getItem('medicos') || '[]');
+    const medico = medicos.find(m => m.identificacion === professionalId);
+    
+    if (medico) {
+      return `Dr. ${medico.nombre} ${medico.apellido} (${medico.especialidad})`;
     }
-    return professionals[professionalId] || professionalId
+    
+    // Solo mostrar médicos realmente registrados
+    return `Médico ID: ${professionalId}`
   }
 
   if (appointments.length === 0) {
@@ -86,7 +267,10 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
         Mis Citas Programadas ({appointments.length})
       </h4>
       
-      {appointments.map((appointment) => (
+      {appointments.map((appointment) => {
+        const isAttended = isAppointmentAttended(appointment.id)
+        
+        return (
         <div key={appointment.id} className="appointment-card">
           <div className="appointment-header">
             <div>
@@ -98,8 +282,8 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
                 Cita ID: {appointment.id}
               </small>
             </div>
-            <span className="appointment-status status-programada">
-              Programada
+            <span className={`appointment-status ${isAttended ? 'status-atendida' : 'status-programada'}`}>
+              {isAttended ? 'Atendida' : 'Programada'}
             </span>
           </div>
           
@@ -126,21 +310,32 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
             
             <div className="appointment-info">
               <i className="fas fa-info-circle"></i>
-              <span><strong>Estado:</strong> Confirmada</span>
+              <span><strong>Estado:</strong> {isAttended ? 'Atendida' : 'Confirmada'}</span>
             </div>
             
             <div className="mt-3 text-end">
-              <button
-                className="btn cancel-appointment-btn"
-                onClick={() => handleCancelAppointment(appointment.id)}
-              >
-                <i className="fas fa-times me-1"></i>
-                Cancelar Cita
-              </button>
+              {isAttended ? (
+                <button
+                  className="btn btn-success"
+                  onClick={() => generateMedicalPDF(appointment.id)}
+                >
+                  <i className="fas fa-download me-1"></i>
+                  Descargar PDF
+                </button>
+              ) : (
+                <button
+                  className="btn cancel-appointment-btn"
+                  onClick={() => handleCancelAppointment(appointment.id)}
+                >
+                  <i className="fas fa-times me-1"></i>
+                  Cancelar Cita
+                </button>
+              )}
             </div>
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
