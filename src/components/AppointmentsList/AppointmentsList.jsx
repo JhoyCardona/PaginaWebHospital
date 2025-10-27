@@ -1,223 +1,154 @@
 import React, { useState, useEffect } from 'react'
 import 'jspdf-autotable'
 import PDFService from '../../services/pdfServiceWorking';
+import { appointmentsServiceFull, medicosService } from '../../services/apiService'
 
 const AppointmentsList = ({ userId, onCancelAppointment }) => {
   const [appointments, setAppointments] = useState([])
+  const [updateTrigger, setUpdateTrigger] = useState(0)
 
   useEffect(() => {
-    const loadAppointments = () => {
+    const loadAppointments = async () => {
       if (!userId) return
-
-      const userAppointments = JSON.parse(localStorage.getItem(`citasProgramadas_${userId}`) || '[]')
-      setAppointments(userAppointments)
-    }
-
-    loadAppointments()
-  }, [userId])
-
-  // Función para verificar si una cita ha sido atendida
-  const isAppointmentAttended = (appointmentId) => {
-    const medicalHistories = JSON.parse(localStorage.getItem('medicalHistories') || '[]')
-    return medicalHistories.some(history => history.citaId === appointmentId)
-  }
-
-  // Función para generar y descargar PDF con TABLAS usando el PDFService correcto
-  const generateMedicalPDF = (appointmentId) => {
-    const medicalHistories = JSON.parse(localStorage.getItem('medicalHistories') || '[]')
-    const medicalHistory = medicalHistories.find(history => history.citaId === appointmentId)
-    
-    if (!medicalHistory) {
-      alert('No se encontró información médica para esta cita.')
-      return
-    }
-
-    const appointment = appointments.find(apt => apt.id === appointmentId)
-    if (!appointment) {
-      alert('No se encontró información de la cita.')
-      return
-    }
-
-    try {
-      // Obtener datos completos del paciente
-      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const pacienteCompleto = registeredUsers.find(user => 
-        user.identificacion === userId || user.numId === userId || user.userId === userId
-      );
-      const nombreCompleto = pacienteCompleto ? 
-        `${pacienteCompleto.nombres || pacienteCompleto.nombre} ${pacienteCompleto.apellidos || pacienteCompleto.apellido}` : 
-        `Paciente (${userId})`;
-      
-      // TRANSFORMAR DATOS AL FORMATO CORRECTO PARA TABLAS
-      const datosParaPDF = {
-        // Información básica
-        motivoConsulta: medicalHistory.motivoConsulta || '',
-        historiaClinica: medicalHistory.antecedentesMedicos || '',
-        diagnostico: medicalHistory.diagnostico || '',
-        recomendaciones: medicalHistory.recomendaciones || '',
-        observaciones: medicalHistory.observaciones || '',
-        
-        // Información del médico - Lógica robusta
-        medico: medicalHistory.medico ? {
-          identificacion: medicalHistory.medico.identificacion || 'No disponible',
-          nombre: medicalHistory.medico.nombre || 'No disponible',
-          apellido: medicalHistory.medico.apellido || '',
-          especialidad: medicalHistory.medico.especialidad || 'No especificada',
-          sede: medicalHistory.medico.sede || 'No especificada'
-        } : {
-          identificacion: 'No disponible',
-          nombre: 'No disponible',
-          apellido: '',
-          especialidad: 'No especificada',
-          sede: 'No especificada'
-        },
-        
-        // Información de la cita
-        paciente: nombreCompleto,
-        documento: userId,
-        fechaCita: appointment.fecha,
-        horaCita: appointment.hora,
-        fechaAtencion: medicalHistory.fechaAtencion || new Date().toISOString(),
-        citaId: appointmentId,
-        
-        // INICIALIZAR ARRAYS PARA TABLAS
-        ordenesClinicas: {
-          laboratorios: [],
-          imagenesDiagnosticas: [],
-          interconsultas: []
-        },
-        medicamentos: [],
-        
-        // Incapacidad - obtener de la historia médica
-        incapacidadMedica: medicalHistory.incapacidadMedica || { tieneIncapacidad: false }
-      };
-      
-      // PARSEAR ÓRDENES MÉDICAS DESDE STRING A ARRAYS PARA TABLAS
-      if (medicalHistory.ordenesMedicas && typeof medicalHistory.ordenesMedicas === 'string') {
-        const ordenesString = medicalHistory.ordenesMedicas.split('; ');
-        ordenesString.forEach(ordenString => {
-          const parts = ordenString.match(/^(\d+)\s-\s(.+)$/);
-          if (parts) {
-            const codigo = parts[1];
-            const descripcion = parts[2];
-            
-            // Clasificar por tipo de código CUPS
-            if (codigo.startsWith('90') || codigo.startsWith('91') || codigo.startsWith('92')) {
-              // Códigos de laboratorio
-              datosParaPDF.ordenesClinicas.laboratorios.push({ codigo, descripcion });
-            } else if (codigo.startsWith('87') || codigo.startsWith('88')) {
-              // Códigos de imágenes diagnósticas
-              datosParaPDF.ordenesClinicas.imagenesDiagnosticas.push({ codigo, descripcion });
-            } else if (codigo.startsWith('89')) {
-              // Códigos de interconsultas - extraer especialidad de la descripción
-              let especialidad = descripcion;
-              if (descripcion.includes('por ')) {
-                especialidad = descripcion.split('por ')[1];
-                // Capitalizar primera letra
-                especialidad = especialidad.charAt(0).toUpperCase() + especialidad.slice(1);
-              }
-              datosParaPDF.ordenesClinicas.interconsultas.push({ 
-                especialidad: especialidad, 
-                motivo: 'Interconsulta médica',
-                urgencia: 'Normal' 
-              });
-            }
-          }
-        });
-      }
-      
-      // PARSEAR MEDICAMENTOS DESDE STRING A ARRAY PARA TABLAS
-      if (medicalHistory.medicamentos && typeof medicalHistory.medicamentos === 'string') {
-        const medicamentosString = medicalHistory.medicamentos.split('; ');
-        datosParaPDF.medicamentos = medicamentosString.map(medString => {
-          const match = medString.match(/^(.+?)\s(.+?)\s(.+?)\s\((.+?)\)\s-\s(.+)$/);
-          if (match) {
-            return {
-              nombre: match[1].trim(),
-              dosis: match[2].trim(),
-              frecuencia: match[3].trim(),
-              via: match[4].trim(),
-              duracion: match[5].trim()
-            };
-          } else {
-            return {
-              nombre: medString,
-              dosis: '',
-              frecuencia: '',
-              via: '',
-              duracion: ''
-            };
-          }
-        });
-      }
-
-      // PARSEAR INCAPACIDAD DESDE STRING A OBJETO PARA PDF
-      if (medicalHistory.incapacidadMedica && typeof medicalHistory.incapacidadMedica === 'string' && medicalHistory.incapacidadMedica.trim() !== '') {
-        // Formato esperado: "X días - Motivo (YYYY-MM-DD a YYYY-MM-DD)" o "X días -  (YYYY-MM-DD a YYYY-MM-DD)"
-        const incapacidadMatch = medicalHistory.incapacidadMedica.match(/^(\d+)\s*días\s*-\s*(.*?)\s*\((.+?)\s*a\s*(.+?)\)$/);
-        if (incapacidadMatch) {
-          let motivo = incapacidadMatch[2].trim();
-          if (motivo === '') {
-            motivo = 'Incapacidad médica'; // Motivo por defecto si está vacío
-          }
-          datosParaPDF.incapacidadMedica = {
-            tieneIncapacidad: true,
-            dias: incapacidadMatch[1].trim(),
-            motivo: motivo,
-            fechaInicio: incapacidadMatch[3].trim(),
-            fechaFin: incapacidadMatch[4].trim()
-          };
-        } else {
-          // Si no coincide el formato, intentar parsear lo que se pueda
-          datosParaPDF.incapacidadMedica = {
-            tieneIncapacidad: true,
-            dias: '1',
-            motivo: medicalHistory.incapacidadMedica,
-            fechaInicio: new Date().toISOString().split('T')[0],
-            fechaFin: new Date().toISOString().split('T')[0]
-          };
+      try {
+        const appts = await appointmentsServiceFull.getAppointmentsByUser(userId)
+        // Normalizar fecha y hora desde la BD
+        const toDateStr = (d) => {
+          if (!d) return ''
+          if (typeof d === 'string') return d.slice(0,10)
+          try { return new Date(d).toISOString().slice(0,10) } catch { return '' }
         }
-      } else if (medicalHistory.incapacidadMedica && typeof medicalHistory.incapacidadMedica === 'object') {
-        datosParaPDF.incapacidadMedica = medicalHistory.incapacidadMedica;
+        const toHHmm = (t) => {
+          if (!t) return ''
+          const s = String(t)
+          return s.length >= 5 ? s.slice(0,5) : s
+        }
+        // Mapear al formato usado por el componente, preservando status y notes
+        const mapped = appts.map(a => ({
+          id: a.appointment_id,
+          fecha: toDateStr(a.appointment_date),
+          hora: toHHmm(a.appointment_time),
+          medico: String(a.medico_id),
+          lugar: null, // se derivará desde el médico (sede) al mostrar
+          status: a.status,
+          notesRaw: a.notes || null
+        }))
+        setAppointments(mapped)
+      } catch (e) {
+        console.error('Error cargando citas desde API', e)
+        setAppointments([])
       }
-      
-      
-      // USAR EL PDFService CORRECTO CON TABLAS
-      PDFService.downloadMedicalReport(datosParaPDF);
-      
-    } catch {
-      alert('Error al generar el PDF. Por favor, inténtelo de nuevo.')
     }
+    loadAppointments()
+  }, [userId, updateTrigger])
+
+  // Refrescar cuando la pestaña vuelve a ser visible o cuando se dispara el evento de guardado médico
+  useEffect(() => {
+    const onVisibility = () => {
+      if (!document.hidden) setUpdateTrigger((x) => x + 1)
+    }
+    const onMedicalDataUpdated = () => setUpdateTrigger((x) => x + 1)
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('medicalDataUpdated', onMedicalDataUpdated)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('medicalDataUpdated', onMedicalDataUpdated)
+    }
+  }, [])
+
+  // Cargar médicos para resolver nombres y sede
+  const [medicosMap, setMedicosMap] = useState({})
+  useEffect(() => {
+    const loadMedicos = async () => {
+      try {
+        const all = await medicosService.getAllMedicos()
+        const map = {}
+        all.forEach(m => { map[String(m.medico_id)] = m })
+        setMedicosMap(map)
+      } catch (e) {
+        console.warn('No se pudieron cargar médicos para mostrar nombres/sedes', e)
+      }
+    }
+    loadMedicos()
+  }, [])
+
+  // Función para verificar si una cita ha sido atendida (alineado con dashboard del médico)
+  const isAppointmentAttended = (appointmentId) => {
+    const appt = appointments.find(a => String(a.id) === String(appointmentId))
+    if (!appt) return false
+    const st = String(appt.status || '').toLowerCase()
+    if (st === 'attended' || st === 'atendida' || st === 'completado' || st === 'completed') return true
+    // Salvaguarda: si las notas tienen una fecha de atención válida, también se considera atendida
+    try {
+      const notes = typeof appt.notesRaw === 'string' ? JSON.parse(appt.notesRaw) : appt.notesRaw
+      if (notes?.fechaAtencion) return true
+    } catch {
+      // ignorar errores de parseo
+    }
+    return false
   }
 
-  const handleCancelAppointment = (appointmentId) => {
-    if (window.confirm('¿Está seguro de que desea cancelar esta cita?')) {
-      // Eliminar de las citas del usuario
-      const updatedAppointments = appointments.filter(apt => apt.id !== appointmentId)
-      localStorage.setItem(`citasProgramadas_${userId}`, JSON.stringify(updatedAppointments))
-      
-      // NUEVA: Eliminar también de las citas generales
-      const allAppointments = JSON.parse(localStorage.getItem('citas') || '[]')
-      const updatedAllAppointments = allAppointments.filter(apt => apt.id !== appointmentId)
-      localStorage.setItem('citas', JSON.stringify(updatedAllAppointments))
-      
-      // Eliminar del slot ocupado
-      const occupiedSlots = JSON.parse(localStorage.getItem('occupiedSlots') || '{}')
-      const appointment = appointments.find(apt => apt.id === appointmentId)
-      if (appointment) {
-        const slotKey = `${appointment.fecha}_${appointment.hora}_${appointment.lugar}_${appointment.medico}`
-        delete occupiedSlots[slotKey]
-        localStorage.setItem('occupiedSlots', JSON.stringify(occupiedSlots))
+  // Generar PDF consultando la BD en el momento de la descarga (fuente de verdad: DB)
+  const generateMedicalPDF = async (appointmentId) => {
+  try {
+    const appt = await appointmentsServiceFull.getAppointmentById(appointmentId);
+    if (!appt) {
+      alert('No se encontró información de la cita en la base de datos.');
+      return;
+    }
+
+    // ✅ Aseguramos que las notas se interpreten correctamente (string u objeto)
+    let notes = {};
+    if (typeof appt.notes === 'string') {
+      try {
+        notes = JSON.parse(appt.notes);
+      } catch (err) {
+        console.warn('No se pudo parsear notes como JSON:', err);
+        notes = {};
       }
-      
-      setAppointments(updatedAppointments)
+    } else if (typeof appt.notes === 'object' && appt.notes !== null) {
+      notes = appt.notes;
+    }
+
+    const fecha = (appt.appointment_date || '').slice(0, 10);
+    const hora = String(appt.appointment_time || '').slice(0, 5);
+
+    const datosParaPDF = {
+      ...notes,
+      paciente: notes.paciente || String(appt.user_id || ''),
+      documento: notes.documento || String(userId || ''),
+      fechaCita: notes.fechaCita || fecha,
+      horaCita: notes.horaCita || hora,
+    };
+
+    console.log('🧾 Datos enviados al PDF:', datosParaPDF); // útil para depuración
+    PDFService.downloadMedicalReport(datosParaPDF);
+  } catch (e) {
+    console.error('❌ Error al descargar datos desde BD o al generar PDF:', e);
+    alert('Error al generar el PDF desde la base de datos. Por favor, inténtelo de nuevo.');
+  }
+};
+
+
+  const handleCancelAppointment = async (appointmentId) => {
+    if (!window.confirm('¿Está seguro de que desea cancelar esta cita?')) return
+    try {
+      await appointmentsServiceFull.deleteAppointment(appointmentId)
+      setAppointments(prev => prev.filter(apt => apt.id !== appointmentId))
       onCancelAppointment && onCancelAppointment(appointmentId)
+    } catch (e) {
+      console.error('Error cancelando cita', e)
+      alert('No se pudo cancelar la cita. Intente nuevamente.')
     }
   }
 
   const formatDate = (dateString) => {
-    const [year, month, day] = dateString.split('-')
-    const date = new Date(year, month - 1, day)
+    // dateString esperado 'YYYY-MM-DD'
+    if (!dateString || typeof dateString !== 'string') return 'Fecha no disponible'
+    const parts = dateString.split('-')
+    if (parts.length < 3) return 'Fecha no disponible'
+    const [year, month, day] = parts
+    const date = new Date(Number(year), Number(month) - 1, Number(day))
     return date.toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',
@@ -226,25 +157,22 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
     })
   }
 
-  const getPlaceName = (placeId) => {
+  const getPlaceName = (appointment) => {
+    const medico = medicosMap[appointment.medico]
+    if (!medico) return 'Sede no disponible'
     const places = {
       'confama': 'CIS Confama Manrique',
       'cis_centro': 'CIS Central - Medellín',
       'cis_norte': 'CIS Zona Norte - Bello'
     }
-    return places[placeId] || placeId
+    return places[medico.sede] || medico.sede || 'Sede no disponible'
   }
 
   const getProfessionalName = (professionalId) => {
-    // Primero, intentar obtener el médico de los datos reales registrados
-    const medicos = JSON.parse(localStorage.getItem('medicos') || '[]');
-    const medico = medicos.find(m => m.identificacion === professionalId);
-    
+    const medico = medicosMap[String(professionalId)]
     if (medico) {
-      return `Dr. ${medico.nombre} ${medico.apellido} (${medico.especialidad})`;
+      return `Dr(a). ${medico.first_name} ${medico.last_name} (${medico.specialty || 'General'})`
     }
-    
-    // Solo mostrar médicos realmente registrados
     return `Médico ID: ${professionalId}`
   }
 
@@ -268,7 +196,7 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
       </h4>
       
       {appointments.map((appointment) => {
-        const isAttended = isAppointmentAttended(appointment.id)
+  const isAttended = isAppointmentAttended(appointment.id)
         
         return (
         <div key={appointment.id} className="appointment-card">
@@ -300,7 +228,7 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
             
             <div className="appointment-info">
               <i className="fas fa-map-marker-alt"></i>
-              <span><strong>Lugar:</strong> {getPlaceName(appointment.lugar)}</span>
+              <span><strong>Lugar:</strong> {getPlaceName(appointment)}</span>
             </div>
             
             <div className="appointment-info">
@@ -324,7 +252,7 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
                 </button>
               ) : (
                 <button
-                  className="btn cancel-appointment-btn"
+                  className="btn btn-danger"
                   onClick={() => handleCancelAppointment(appointment.id)}
                 >
                   <i className="fas fa-times me-1"></i>

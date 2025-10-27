@@ -5,24 +5,9 @@ const SetupUsers = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Solo crear arrays vacíos para que el sistema pueda funcionar
-    const users = []
-    
-    // Solo crear arrays vacíos para que el sistema pueda funcionar
-    const medicos = []
-
-    // Solo crear arrays vacíos para que el sistema pueda funcionar
-    const historiasClinicas = [];
-
-    // Guardar en localStorage
-    localStorage.setItem('registeredUsers', JSON.stringify(users))
-    localStorage.setItem('medicos', JSON.stringify(medicos))
-    localStorage.setItem('historiasClinicas', JSON.stringify(historiasClinicas))
-    
-    // Mostrar confirmación y redirigir después de 3 segundos
-    setTimeout(() => {
-      navigate('/login')
-    }, 3000)
+    // Ya no se guardan datos en localStorage. Redirigir al login.
+    const t = setTimeout(() => navigate('/login'), 1500)
+    return () => clearTimeout(t)
   }, [navigate])
 
   return (
@@ -40,12 +25,7 @@ const SetupUsers = () => {
               
               <div className="alert alert-info">
                 <h5>📋 Sistema listo para usar</h5>
-                <p>Los usuarios y médicos se registrarán a medida que usen el sistema:</p>
-                <ul>
-                  <li><strong>Pacientes:</strong> Pueden registrarse desde el formulario de login</li>
-                  <li><strong>Médicos:</strong> Pueden registrarse desde el portal médico</li>
-                  <li><strong>Historias médicas:</strong> Se crearán durante las consultas</li>
-                </ul>
+                <p>Los datos se guardarán exclusivamente en la base de datos.</p>
               </div>
               
               <p className="mt-3">

@@ -1,24 +1,27 @@
-﻿import React from 'react'
+﻿import React, { useEffect, useState } from 'react'
+import { appointmentsServiceFull } from '../../services/apiService'
 
 const TimeSlots = ({ 
   selectedDate, 
   selectedPlace, 
   selectedProfessional, 
-  onConfirmAppointment 
+  onConfirmAppointment,
+  selectedDateStr
 }) => {
+  const [occupiedTimes, setOccupiedTimes] = useState(new Set())
   const availableSlots = [
-    { time: '08:00', available: true },
-    { time: '08:30', available: true },
-    { time: '09:00', available: false },
-    { time: '09:30', available: true },
-    { time: '10:00', available: true },
-    { time: '10:30', available: false },
-    { time: '11:00', available: true },
-    { time: '14:00', available: true },
-    { time: '14:30', available: true },
-    { time: '15:00', available: false },
-    { time: '15:30', available: true },
-    { time: '16:00', available: true }
+    { time: '08:00' },
+    { time: '08:30' },
+    { time: '09:00' },
+    { time: '09:30' },
+    { time: '10:00' },
+    { time: '10:30' },
+    { time: '11:00' },
+    { time: '14:00' },
+    { time: '14:30' },
+    { time: '15:00' },
+    { time: '15:30' },
+    { time: '16:00' }
   ]
 
   const formatDate = (day, month, year) => {
@@ -31,12 +34,40 @@ const TimeSlots = ({
     })
   }
 
+  useEffect(() => {
+    const fetchOccupied = async () => {
+      if (!selectedProfessional || !selectedDateStr) {
+        setOccupiedTimes(new Set())
+        return
+      }
+      try {
+        const appts = await appointmentsServiceFull.getAppointmentsByMedico(selectedProfessional)
+        // Normalizar fecha a 'YYYY-MM-DD' para comparar con selectedDateStr
+        const toDateStr = (d) => {
+          if (!d) return ''
+          if (typeof d === 'string') return d.slice(0, 10)
+          try { return new Date(d).toISOString().slice(0, 10) } catch { return '' }
+        }
+        const sameDay = appts.filter(a => toDateStr(a.appointment_date) === selectedDateStr)
+        // Normalizar a formato HH:mm para comparar con los slots visuales
+        const toHHmm = (t) => {
+          if (!t) return t
+          const s = String(t)
+          return s.length >= 5 ? s.slice(0,5) : s
+        }
+        const times = new Set(sameDay.map(a => toHHmm(a.appointment_time)))
+        setOccupiedTimes(times)
+      } catch (e) {
+        console.warn('No se pudieron cargar citas del médico para determinar disponibilidad', e)
+        setOccupiedTimes(new Set())
+      }
+    }
+    fetchOccupied()
+  }, [selectedProfessional, selectedDateStr])
+
   const isSlotOccupied = (time) => {
     if (!selectedDate || !selectedPlace || !selectedProfessional) return false
-    
-    const occupiedSlots = JSON.parse(localStorage.getItem('occupiedSlots') || '{}')
-    const slotKey = `${selectedDate}_${time}_${selectedPlace}_${selectedProfessional}`
-    return occupiedSlots[slotKey] || false
+    return occupiedTimes.has(time)
   }
 
   const handleConfirmSlot = (time) => {
@@ -86,7 +117,7 @@ const TimeSlots = ({
               <tbody>
                 {availableSlots.map((slot) => {
                   const isOccupied = isSlotOccupied(slot.time)
-                  const isAvailable = slot.available && !isOccupied
+                  const isAvailable = !isOccupied
                   
                   return (
                     <tr key={slot.time}>

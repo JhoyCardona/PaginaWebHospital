@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
+import { authService } from '../services/apiService'
 import '../styles/loginPage.css'
 
 const LoginPage = () => {
@@ -30,41 +31,15 @@ const LoginPage = () => {
   })
 
   useEffect(() => {
-    // Redirigir si el usuario ya está logueado
-    if (localStorage.getItem('isLoggedIn') === 'true') {
+    // Redirigir sólo si existe token Y el flag isLoggedIn (evita bucles)
+    const hasToken = authService.isAuthenticated()
+    const hasFlag = localStorage.getItem('isLoggedIn') === 'true'
+    if (hasToken && hasFlag) {
       navigate('/agenda-citas')
     }
   }, [navigate])
 
-  const authenticateUser = (tipoId, numId, password) => {
-    // Verificar usuarios registrados en localStorage con tipo de documento, número y contraseña
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    
-    const user = registeredUsers.find(u => 
-      u.tipoId === tipoId && 
-      u.userId === numId && 
-      u.password === password
-    );
-    
-    if (user) {
-      // Normalizar datos para compatibilidad
-      const userData = {
-        id: user.userId,
-        firstName: user.nombre,
-        lastName: user.apellido,
-        email: user.email,
-        phone: user.telefono,
-        tipoId: user.tipoId,
-        fechaNacimiento: user.fechaNacimiento,
-        createdAt: user.fechaRegistro
-      };
-      return { success: true, userData };
-    }
-    
-    return { success: false, userData: null };
-  }
-
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault()
     
     const { tipoId, numId, password } = loginData
@@ -79,18 +54,22 @@ const LoginPage = () => {
       return
     }
     
-    const authResult = authenticateUser(tipoId, numId.trim(), password);
-    
-    if (authResult.success) {
-      // Guardar datos del usuario autenticado
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userId', numId.trim());
-      localStorage.setItem('currentUserData', JSON.stringify(authResult.userData));
+    try {
+      // Usar la API para autenticar
+  const resp = await authService.login(numId.trim(), password)
+  console.log('[UI] login pacientes OK', resp)
       
-      login(numId.trim());
-      navigate('/agenda-citas');
-    } else {
-      alert('Credenciales incorrectas. Verifique el tipo de documento, número de identificación y contraseña.');
+      // Mantener compatibilidad con el sistema existente
+  const userIdFromResp = resp?.user?.user_id || numId.trim()
+  localStorage.setItem('isLoggedIn', 'true')
+  localStorage.setItem('userId', String(userIdFromResp))
+
+  login(String(userIdFromResp))
+      navigate('/agenda-citas')
+    } catch (error) {
+      console.error('Error en login:', error)
+      const msg = error?.response?.data?.message || 'Credenciales incorrectas. Verifique el número de identificación y contraseña.'
+      alert(msg)
     }
   }
 
@@ -110,7 +89,7 @@ const LoginPage = () => {
     }))
   }
 
-  const handleRegisterSubmit = () => {
+  const handleRegisterSubmit = async () => {
     const { tipoId, numId, nombre, apellido, email, telefono, password, confirmPassword, fechaNacimiento, terminosAceptados } = registerData
 
     // Validaciones
@@ -139,49 +118,58 @@ const LoginPage = () => {
       return
     }
 
-    // Verificar si el usuario ya existe
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-    const existingUser = registeredUsers.find(u => u.userId === numId)
-    
-    if (existingUser) {
-      alert('Este número de identificación ya está registrado.')
-      return
+    try {
+      // Crear usuario en la base de datos
+      await authService.register({
+        id_type: tipoId,
+        id_number: numId,
+        first_name: nombre,
+        last_name: apellido,
+        email: email,
+        phone: telefono,
+        password: password,
+        date_of_birth: fechaNacimiento
+      })
+
+      // Auto-login tras registro para mejorar UX
+      try {
+        const loginResp = await authService.login(numId, password)
+        console.log('[UI] auto-login paciente tras registro OK', loginResp)
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('userId', numId)
+        login(numId)
+        setShowRegisterModal(false)
+        navigate('/agenda-citas')
+        return
+      } catch (e) {
+        console.warn('[UI] auto-login paciente falló tras registro', e)
+      }
+
+      // Si el auto-login falla, cerramos modal y mostramos éxito clásico
+      setShowRegisterModal(false)
+      alert('¡Registro exitoso! Ya puede iniciar sesión con sus credenciales.')
+      
+      // Limpiar formulario
+      setRegisterData({
+        tipoId: '',
+        numId: '',
+        nombre: '',
+        apellido: '',
+        email: '',
+        telefono: '',
+        password: '',
+        confirmPassword: '',
+        fechaNacimiento: '',
+        terminosAceptados: false
+      })
+    } catch (error) {
+      console.error('Error en registro:', error)
+      if (error.response?.data?.message) {
+        alert(error.response.data.message)
+      } else {
+        alert('Error al crear la cuenta. Por favor intente nuevamente.')
+      }
     }
-
-    // Crear nuevo usuario
-    const newUser = {
-      userId: numId,
-      tipoId: tipoId,
-      nombre: nombre,
-      apellido: apellido,
-      email: email,
-      telefono: telefono,
-      password: password,
-      fechaNacimiento: fechaNacimiento,
-      fechaRegistro: new Date().toISOString()
-    }
-
-    // Guardar en localStorage
-    registeredUsers.push(newUser)
-    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers))
-
-    // Cerrar modal y mostrar éxito
-    setShowRegisterModal(false)
-    alert('¡Registro exitoso! Ya puede iniciar sesión con sus credenciales.')
-    
-    // Limpiar formulario
-    setRegisterData({
-      tipoId: '',
-      numId: '',
-      nombre: '',
-      apellido: '',
-      email: '',
-      telefono: '',
-      password: '',
-      confirmPassword: '',
-      fechaNacimiento: '',
-      terminosAceptados: false
-    })
   }
 
   const handlePasswordRecovery = () => {

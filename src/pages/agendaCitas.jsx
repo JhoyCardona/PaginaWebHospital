@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
+import { usersService, medicosService, appointmentsServiceFull } from '../services/apiService'
 import Calendar from '../components/Calendar/Calendar'
 import TimeSlots from '../components/TimeSlots/TimeSlots'
 import AppointmentsList from '../components/AppointmentsList/AppointmentsList'
@@ -34,26 +36,56 @@ const AgendaCitas = () => {
     { id: 'cis_norte', name: 'CIS Zona Norte - Bello' }
   ]
 
-  // Cargar médicos registrados desde localStorage
-  const cargarMedicosRegistrados = () => {
-    const medicos = JSON.parse(localStorage.getItem('medicos') || '[]')
+  // Cargar médicos por sede desde backend (con fallback a getAll y a localStorage)
+  const cargarMedicosRegistrados = async (sedeSeleccionada) => {
     const medicosPorSede = {}
-    
-    // Agrupar médicos por sede
-    medicos.forEach(medico => {
-      if (!medicosPorSede[medico.sede]) {
-        medicosPorSede[medico.sede] = []
+
+    try {
+      if (sedeSeleccionada) {
+        const medicosSede = await medicosService.getMedicosBySede(sedeSeleccionada)
+        medicosPorSede[sedeSeleccionada] = medicosSede.map(med => ({
+          id: String(med.medico_id),
+          name: `Dr(a). ${med.first_name} ${med.last_name} (${med.specialty || 'General'})`,
+          identificacion: String(med.id_number || ''),
+          especialidad: med.specialty || 'General'
+        }))
+      } else {
+        const medicosApi = await medicosService.getAllMedicos()
+        medicosApi.forEach(med => {
+          const sede = med.sede || 'default'
+          if (!medicosPorSede[sede]) medicosPorSede[sede] = []
+          medicosPorSede[sede].push({
+            id: String(med.medico_id),
+            name: `Dr(a). ${med.first_name} ${med.last_name} (${med.specialty || 'General'})`,
+            identificacion: String(med.id_number || ''),
+            especialidad: med.specialty || 'General'
+          })
+        })
       }
-      medicosPorSede[medico.sede].push({
-        id: medico.identificacion,
-        name: `Dr(a). ${medico.nombre} ${medico.apellido} (${medico.especialidad})`,
-        identificacion: medico.identificacion,
-        especialidad: medico.especialidad
-      })
-    })
-    
-    // No usar médicos por defecto - solo mostrar médicos registrados
-    
+    } catch (error) {
+      // Solo usar fallback a localStorage si no hay respuesta del servidor (error de red)
+      const isNetworkError = !error?.response
+      console.warn('Fallo al cargar médicos desde API', error?.response?.status || error?.code || 'NETWORK', '-> fallback?', isNetworkError)
+      if (isNetworkError) {
+        const medicos = JSON.parse(localStorage.getItem('medicos') || '[]')
+        medicos.forEach(medico => {
+          const sede = medico.sede || 'default'
+          if (!medicosPorSede[sede]) medicosPorSede[sede] = []
+          medicosPorSede[sede].push({
+            id: String(medico.identificacion),
+            name: `Dr(a). ${medico.nombre} ${medico.apellido} (${medico.especialidad})`,
+            identificacion: String(medico.identificacion),
+            especialidad: medico.especialidad
+          })
+        })
+      } else {
+        // Con respuesta del servidor (400/404/500), no usamos fallback para evitar datos obsoletos
+        if (sedeSeleccionada) {
+          medicosPorSede[sedeSeleccionada] = []
+        }
+      }
+    }
+
     setMedicosRegistrados(medicosPorSede)
   }
 
@@ -66,33 +98,30 @@ const AgendaCitas = () => {
       navigate('/login')
       return
     }
-    
     setCurrentUserId(storedUserId)
-    
-    // Cargar datos del usuario desde localStorage
-    if (storedUserId) {
-      const currentUserData = JSON.parse(localStorage.getItem('currentUserData') || 'null');
-      if (currentUserData) {
-        setUserData(currentUserData);
-      } else {
-        // Fallback: buscar en registeredUsers
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-        const user = registeredUsers.find(u => u.userId === storedUserId);
-        if (user) {
-          const userData = {
-            id: user.userId,
-            firstName: user.nombre,
-            lastName: user.apellido,
+
+    // Obtener datos del usuario desde la API
+    const fetchUserData = async () => {
+      if (storedUserId) {
+        try {
+          const user = await usersService.getUserById(storedUserId)
+          setUserData({
+            id: user.user_id,
+            firstName: user.first_name,
+            lastName: user.last_name,
             email: user.email,
-            phone: user.telefono,
-            tipoId: user.tipoId
-          };
-          setUserData(userData);
+            phone: user.phone,
+            tipoId: user.id_type
+          })
+        } catch (error) {
+          console.warn('Error obteniendo datos del usuario:', error)
+          setUserData(null)
         }
       }
     }
-    
-    cargarMedicosRegistrados()
+    fetchUserData()
+    // Cargar médicos (sin sede aún)
+    cargarMedicosRegistrados().catch(() => {})
   }, [navigate])
 
   const handleLogout = () => {
@@ -131,6 +160,8 @@ const AgendaCitas = () => {
   const handlePlaceChange = (e) => {
     setSelectedPlace(e.target.value)
     setSelectedProfessional('') // Reset professional selection
+    // Cargar médicos de esa sede
+    cargarMedicosRegistrados(e.target.value).catch(() => {})
   }
 
   const handleProfessionalChange = (e) => {
@@ -166,24 +197,28 @@ const AgendaCitas = () => {
       fechaCreacion: new Date().toISOString()
     }
 
-    // Guardar en citas del usuario
-    const userAppointments = JSON.parse(localStorage.getItem(`citasProgramadas_${currentUserId}`) || '[]')
-    userAppointments.push(appointmentData)
-    localStorage.setItem(`citasProgramadas_${currentUserId}`, JSON.stringify(userAppointments))
+    // Guardar la cita solo en la API (sin localStorage)
+    ;(async () => {
+      try {
+        const apiPayload = {
+          user_id: currentUserId,
+          medico_id: selectedProfessional, // medico_id estándar
+          appointment_date: appointmentData.fecha,
+          appointment_time: appointmentData.hora,
+          specialty: appointmentData.medicoEspecialidad,
+          status: 'programado',
+          notes: appointmentData.tipo
+        }
+        await appointmentsServiceFull.createAppointment(apiPayload)
+      } catch (err) {
+        console.error('No se pudo guardar la cita en la API.', err)
+        alert('No se pudo guardar la cita. Intente nuevamente.')
+        return
+      }
+    })()
 
-    // NUEVA: Guardar también en citas generales para que los médicos las vean
-    const allAppointments = JSON.parse(localStorage.getItem('citas') || '[]')
-    allAppointments.push(appointmentData)
-    localStorage.setItem('citas', JSON.stringify(allAppointments))
-
-    // Marcar slot como ocupado
-    const occupiedSlots = JSON.parse(localStorage.getItem('occupiedSlots') || '{}')
-    const slotKey = `${selectedDate}_${time}_${selectedPlace}_${selectedProfessional}`
-    occupiedSlots[slotKey] = appointmentData
-    localStorage.setItem('occupiedSlots', JSON.stringify(occupiedSlots))
-
-    // Mostrar confirmación
-    alert('✅ ¡Cita confirmada exitosamente!\n\n' +
+  // Mostrar confirmación
+  alert('✅ ¡Cita confirmada exitosamente!\n\n' +
           `Fecha: ${appointmentData.fecha}\n` +
           `Hora: ${time}\n` +
           `Lugar: ${places.find(p => p.id === selectedPlace)?.name}\n` +
@@ -307,6 +342,7 @@ const AgendaCitas = () => {
                     selectedDate={selectedDate}
                     selectedPlace={selectedPlace}
                     selectedProfessional={selectedProfessional}
+                    selectedDateStr={selectedDate ? `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${selectedDate.toString().padStart(2, '0')}` : null}
                     onConfirmAppointment={handleConfirmAppointment}
                   />
                 </div>

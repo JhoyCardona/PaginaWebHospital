@@ -1,4 +1,5 @@
-import jsPDF from 'jspdf';
+// En jsPDF v2/v3 el export correcto es nombrado
+import { jsPDF } from 'jspdf';
 
 class PDFServiceWorking {
   static downloadMedicalReport(infoMedica) {
@@ -6,8 +7,10 @@ class PDFServiceWorking {
       const pdf = new jsPDF();
       
       // Configuración inicial
-      const pageWidth = pdf.internal.pageSize.width;
-      const pageHeight = pdf.internal.pageSize.height;
+      // jsPDF v3 expone getWidth/getHeight; mantener compat con v2
+      const pageSize = pdf.internal.pageSize;
+      const pageWidth = typeof pageSize.getWidth === 'function' ? pageSize.getWidth() : pageSize.width;
+      const pageHeight = typeof pageSize.getHeight === 'function' ? pageSize.getHeight() : pageSize.height;
       const margin = 20;
       let yPosition = margin;
       
@@ -113,9 +116,9 @@ class PDFServiceWorking {
       };
       
       // Encabezado del documento
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('INFORME MÉDICO', pageWidth / 2, yPosition, { align: 'center' });
+  pdf.setFontSize(18);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('INFORME MÉDICO', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 20;
       
       // Línea separadora
@@ -125,8 +128,8 @@ class PDFServiceWorking {
       yPosition += 15;
       
       // Información del paciente
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'bold');
       pdf.text('DATOS DEL PACIENTE', margin, yPosition);
       yPosition += 10;
       
@@ -452,13 +455,15 @@ class PDFServiceWorking {
       
       // Generar nombre del archivo
       const fechaStr = new Date(infoMedica.fechaAtencion || new Date()).toISOString().split('T')[0];
-      const pacienteStr = (infoMedica.paciente || 'Paciente').replace(/\s+/g, '_');
+      const pacienteStr = String(infoMedica.paciente || 'Paciente').replace(/\s+/g, '_');
       const fileName = `Informe_Medico_${pacienteStr}_${fechaStr}.pdf`;
       
       // Descargar
       pdf.save(fileName);
       
-    } catch {
+    } catch (err) {
+      // Mostrar en consola para diagnóstico y mantener alerta amigable
+      console.error('[PDF] Error generando informe:', err);
       alert('Error al generar el PDF. Por favor, intenta nuevamente.');
     }
   }

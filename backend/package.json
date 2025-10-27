@@ -1,0 +1,23 @@
+{
+  "name": "hospital-backend",
+  "version": "1.0.0",
+  "description": "Backend para sistema de citas médicas",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "migrate:add-sede": "node ./scripts/migrate_add_sede.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mysql2": "^3.6.5",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

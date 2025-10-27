@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/dashboardMedico.css';
+import { appointmentsServiceFull, usersService } from '../services/apiService';
 
 function DashboardMedico() {
   const navigate = useNavigate();
@@ -8,118 +9,165 @@ function DashboardMedico() {
   const [medicoData, setMedicoData] = useState(null);
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
-  useEffect(() => {
-    // Verificar si el médico está logueado
-    const isMedicoLoggedIn = localStorage.getItem('isMedicoLoggedIn') === 'true';
-    const medicoId = localStorage.getItem('medicoId');
-    const medicoDataStored = localStorage.getItem('medicoData');
+  // Carga las citas desde la BD para el médico autenticado y enriquece con datos del paciente
+  const cargarCitasDesdeBD = useCallback(async (medico) => {
+    try {
+      if (!medico?.medico_id) return;
+      // Traer citas por medico_id (DB)
+      const citasDB = await appointmentsServiceFull.getAppointmentsByMedico(medico.medico_id);
 
-    if (!isMedicoLoggedIn || !medicoId || !medicoDataStored) {
-      navigate('/login-medicos');
-      return;
+      // Enriquecer con nombre del paciente
+      const citasEnriquecidas = await Promise.all(
+        (citasDB || []).map(async (c) => {
+          let pacienteNombre = c.user_id;
+          try {
+            const user = await usersService.getUserById(c.user_id);
+            if (user) {
+              pacienteNombre = `${user.first_name || ''} ${user.last_name || ''}`.trim() || (user.id_number || user.user_id);
+            }
+          } catch {
+            // Si falla, dejamos el id como fallback
+          }
+
+          const base = {
+            id: c.appointment_id,
+            fecha: c.appointment_date,
+            hora: c.appointment_time,
+            paciente: c.user_id, // Usamos user_id para compatibilidad con atencionMedica (claves en localStorage por paciente)
+            pacienteNombre,
+            estado: c.status || 'programada',
+            especialidad: c.specialty || medico.especialidad || 'Consulta',
+            notesRaw: c.notes || null,
+          };
+          return base;
+        })
+      );
+
+      setCitasPacientes(citasEnriquecidas);
+    } catch (error) {
+      console.error('[DashboardMedico] Error cargando citas desde BD:', error);
+      setCitasPacientes([]);
     }
+  }, []);
 
-    const medico = JSON.parse(medicoDataStored);
-    setMedicoData(medico);
+  useEffect(() => {
+  // Verificar si el médico está logueado
+  const isMedicoLoggedIn = localStorage.getItem('isMedicoLoggedIn') === 'true';
+  const medicoId = localStorage.getItem('medicoId');
+  const medicoDataStored = localStorage.getItem('medicoData');
 
-    // Cargar las citas del médico desde localStorage
-    const cargarCitas = () => {
-      const todasLasCitas = JSON.parse(localStorage.getItem('citas') || '[]');
-      
-      // Filtrar citas del médico actual - comparar con el ID usado en agendaCitas
-      const citasDelMedico = todasLasCitas.filter(cita => {
-        // En agendaCitas se guarda como cita.medico = selectedProfessional (que es la identificación)
-        const esDelMedico = cita.medico === medicoId || cita.medico?.toString() === medicoId?.toString();
-        return esDelMedico;
-      });
-      
-      setCitasPacientes(citasDelMedico);
-    };
+  if (!isMedicoLoggedIn || !medicoId || !medicoDataStored) {
+    navigate('/login-medicos');
+    return;
+  }
 
-    cargarCitas();
-  }, [navigate, updateTrigger]);
+  const medico = JSON.parse(medicoDataStored);
+  setMedicoData(medico);
+
+  // Cargar citas desde la BD
+  cargarCitasDesdeBD(medico);
+}, [navigate, updateTrigger, cargarCitasDesdeBD]);
+
 
   // Efecto para forzar actualización cuando se vuelve al dashboard
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        setUpdateTrigger(prev => prev + 1);
-      }
-    };
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      setUpdateTrigger(prev => prev + 1);
+    }
+  };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  // Escuchar cambios en el localStorage para actualizar el dashboard
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+}, []);
+
+
+  // Escuchar cambios en el localStorage (solo para historias médicas) para actualizar el dashboard
   useEffect(() => {
-    const handleStorageChange = () => {
-      setUpdateTrigger(prev => prev + 1);
-    };
+  const handleMedicalDataUpdate = () => {
+    setUpdateTrigger(prev => prev + 1);
+  };
 
-    const handleMedicalDataUpdate = () => {
-      setUpdateTrigger(prev => prev + 1);
-    };
+  window.addEventListener('medicalDataUpdated', handleMedicalDataUpdate);
 
-    // Listener para cambios en localStorage
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Listener para eventos personalizados de actualización médica
-    window.addEventListener('medicalDataUpdated', handleMedicalDataUpdate);
+  return () => {
+    window.removeEventListener('medicalDataUpdated', handleMedicalDataUpdate);
+  };
+}, []);
 
-    // Función para detectar cambios manuales en localStorage
-    const checkForUpdates = () => {
-      setUpdateTrigger(prev => prev + 1);
-    };
-
-    // Verificar actualizaciones cada 2 segundos
-    const interval = setInterval(checkForUpdates, 2000);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('medicalDataUpdated', handleMedicalDataUpdate);
-      clearInterval(interval);
-    };
-  }, []);
 
   // Función para verificar si una cita ha sido atendida
   const isCitaAtendida = (citaId) => {
-    const medicalHistories = JSON.parse(localStorage.getItem('medicalHistories') || '[]');
-    return medicalHistories.some(history => history.citaId === citaId);
-  };
+  const cita = citasPacientes.find((c) => String(c.id) === String(citaId));
+  if (!cita) return false;
+
+  // Normaliza el estado
+  const estado = (cita.estado || '').toString().toLowerCase();
+
+  // Si el estado en BD indica que ya fue atendida
+  if (['attended', 'atendida', 'completado', 'completed'].includes(estado)) {
+    return true;
+  }
+
+  // Si tiene notasRaw válidas con fecha de atención
+  try {
+    const notes = typeof cita.notesRaw === 'string' ? JSON.parse(cita.notesRaw) : cita.notesRaw;
+    if (notes && notes.fechaAtencion) return true; // ✅ Solo si tiene fecha real
+  } catch (error) {
+    // Si notesRaw no se puede parsear, se ignora
+  }
+
+  // Si no cumple ninguna condición, aún no está atendida
+  return false;
+};
+
 
   // Calcular estadísticas
   const getEstadisticas = () => {
-    const hoy = new Date().toDateString();
-    const medicoId = localStorage.getItem('medicoId');
-    
-    // Citas atendidas hoy por este médico (independientemente de cuándo fueron programadas)
-    const medicalHistories = JSON.parse(localStorage.getItem('medicalHistories') || '[]');
-    const citasAtendidasHoy = medicalHistories.filter(history => {
-      if (!history.fechaAtencion) return false;
-      const fechaAtencion = new Date(history.fechaAtencion).toDateString();
-      const esHoy = fechaAtencion === hoy;
-      const esDelMedico = history.medicoId === medicoId || history.medicoId?.toString() === medicoId?.toString();
-      return esHoy && esDelMedico;
-    });
+  const hoyStr = new Date().toISOString().split('T')[0];
 
-    // Citas pendientes (no atendidas)
-    const citasPendientes = citasPacientes.filter(cita => !isCitaAtendida(cita.id));
+  // ✅ Considerar atendida solo si tiene fecha de atención o estado válido
+  const isAttendedByData = (c) => {
+    const estado = (c.estado || '').toString().toLowerCase();
+    if (['attended', 'atendida', 'completado', 'completed'].includes(estado)) return true;
 
-    // Total de citas
-    const totalCitas = citasPacientes.length;
-
-    return {
-      citasAtendidas: citasAtendidasHoy.length,
-      citasPendientes: citasPendientes.length,
-      totalCitas
-    };
+    // Si las notas tienen una fecha de atención válida, también se considera atendida
+    try {
+      const notes = typeof c.notesRaw === 'string' ? JSON.parse(c.notesRaw) : c.notesRaw;
+      if (notes?.fechaAtencion) return true;
+    } catch {
+      // ignorar errores de parseo
+    }
+    return false;
   };
 
+  // ✅ Filtrar las atendidas hoy
+  const attendedToday = citasPacientes.filter(c => {
+    try {
+      const notes = typeof c.notesRaw === 'string' ? JSON.parse(c.notesRaw) : c.notesRaw;
+      const fechaAtencion = notes?.fechaAtencion ? new Date(notes.fechaAtencion).toISOString().split('T')[0] : null;
+      return fechaAtencion === hoyStr;
+    } catch {
+      return false;
+    }
+  });
+
+  // ✅ Filtrar pendientes (sin fechaAtencion ni estado de atendida)
+  const pendientes = citasPacientes.filter(c => !isAttendedByData(c));
+
+  return {
+    citasAtendidas: attendedToday.length,
+    citasPendientes: pendientes.length,
+    totalCitas: citasPacientes.length,
+  };
+};
+
   const estadisticas = getEstadisticas();
+
+  // El médico no descarga PDFs desde el dashboard; sólo el paciente podrá hacerlo desde su vista.
 
   const handleLogout = () => {
     localStorage.removeItem('isMedicoLoggedIn');
@@ -219,48 +267,63 @@ function DashboardMedico() {
                   <tr key={cita.id}>
                     <td>{new Date(cita.fecha).toLocaleDateString()}</td>
                     <td>{cita.hora}</td>
-                    <td>{cita.paciente}</td>
+                    <td>{cita.pacienteNombre || cita.paciente}</td>
                     <td>
-                      <span className={`badge ${citaAtendida ? 'bg-primary' : cita.estado === 'confirmada' ? 'bg-success' : 'bg-warning'}`}>
-                        {citaAtendida ? 'Atendida' : cita.estado || 'pendiente'}
-                      </span>
+                      {(() => {
+                        const raw = (cita.estado || '').toString().toLowerCase()
+                        const isProgramado = raw === 'scheduled' || raw === 'programada' || raw === 'confirmada' || raw === 'programado'
+                        const isCancelado = raw === 'cancelled' || raw === 'cancelada' || raw === 'cancelado'
+                        const badgeClass = citaAtendida
+                          ? 'bg-primary'
+                          : isProgramado
+                          ? 'bg-success'
+                          : isCancelado
+                          ? 'bg-secondary'
+                          : 'bg-warning'
+                        const label = citaAtendida
+                          ? 'Atendida'
+                          : isProgramado
+                          ? 'Programado'
+                          : isCancelado
+                          ? 'Cancelado'
+                          : 'Pendiente'
+                        return (
+                          <span className={`badge ${badgeClass}`}>
+                            {label}
+                          </span>
+                        )
+                      })()}
                     </td>
                     <td>
-                      {citaAtendida ? (
-                        <button 
-                          className="btn btn-info"
-                          disabled
-                          style={{
-                            backgroundColor: '#17a2b8',
-                            borderColor: '#17a2b8',
-                            color: 'white',
-                            padding: '8px 16px',
-                            borderRadius: '5px',
-                            fontWeight: 'bold',
-                            cursor: 'not-allowed',
-                            opacity: '0.8'
-                          }}
-                        >
-                          Paciente Atendido
-                        </button>
-                      ) : (
-                        <button 
-                          className="btn btn-success"
-                          onClick={() => navigate(`/atencion-medica/${cita.id}`, { 
-                            state: { cita } 
-                          })}
-                          style={{
-                            backgroundColor: '#28a745',
-                            borderColor: '#28a745',
-                            color: 'white',
-                            padding: '8px 16px',
-                            borderRadius: '5px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          Atender Paciente
-                        </button>
-                      )}
+                      {isCitaAtendida(cita.id) ? (
+  <div className="d-flex gap-2">
+    <button 
+      className="btn btn-secondary"
+      disabled
+      title="Esta cita ya fue atendida"
+    >
+      Paciente Atendido
+    </button>
+  </div>
+) : (
+  <button 
+    className="btn btn-success"
+    onClick={() => navigate(`/atencion-medica/${cita.id}`, {
+      state: { cita: { id: cita.id, fecha: cita.fecha, hora: cita.hora, paciente: cita.paciente } }
+    })}
+    style={{
+      backgroundColor: '#28a745',
+      borderColor: '#28a745',
+      color: 'white',
+      padding: '8px 16px',
+      borderRadius: '5px',
+      fontWeight: 'bold'
+    }}
+  >
+    Atender Paciente
+  </button>
+)}
+
                     </td>
                   </tr>
                   )

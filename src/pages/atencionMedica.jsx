@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import CupsSelector from '../components/CupsSelector/CupsSelector';
 import MedicationTable from '../components/MedicationTable/MedicationTable';
@@ -7,6 +7,8 @@ import '../styles/atencionMedica.css';
 import '../components/CupsSelector/CupsSelector.css';
 import '../components/MedicationTable/MedicationTable.css';
 import '../components/IncapacidadManager/IncapacidadManager.css';
+
+import { appointmentsServiceFull } from '../services/apiService';
 
 function AtencionMedica() {
   const { citaId } = useParams();
@@ -36,7 +38,12 @@ function AtencionMedica() {
     observaciones: ''
   });
 
+  // Evitar bucles: correr esta inicialización solo una vez por montaje
+  const initializedRef = useRef(false);
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     // Verificar autenticación del médico
     const isMedicoLoggedIn = localStorage.getItem('isMedicoLoggedIn') === 'true';
     const medicoDataStored = localStorage.getItem('medicoData');
@@ -53,13 +60,8 @@ function AtencionMedica() {
 
     setMedicoData(JSON.parse(medicoDataStored));
 
-    // Cargar información médica previa si existe
-    const infoMedicaKey = `infoMedica_${cita.paciente}_${citaId}`;
-    const infoPrevia = localStorage.getItem(infoMedicaKey);
-    if (infoPrevia) {
-      setFormData(JSON.parse(infoPrevia));
-    }
-  }, [citaId, cita, navigate]);
+    // No leemos ni precargamos información desde localStorage; la fuente de verdad es la BD.
+  }, [cita, citaId, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,16 +88,15 @@ function AtencionMedica() {
     }));
   };
 
-  const handleIncapacidadChange = (incapacidadData) => {
+  const handleIncapacidadChange = useCallback((incapacidadData) => {
     setFormData(prev => ({
       ...prev,
       incapacidadMedica: incapacidadData
     }));
-  };
+  }, []);
 
-  const handleGuardar = () => {
-    // Guardar en localStorage para que aparezca en el perfil del paciente
-    const infoMedicaKey = `infoMedica_${cita.paciente}_${citaId}`;
+  const handleGuardar = async () => {
+    // Construir historia clínica a guardar en BD (campo notes de appointments)
     const infoMedica = {
       ...formData,
       citaId,
@@ -111,91 +112,23 @@ function AtencionMedica() {
       fechaCita: cita.fecha,
       horaCita: cita.hora
     };
-
-    localStorage.setItem(infoMedicaKey, JSON.stringify(infoMedica));
-
-    // También agregar a la lista general de historias médicas del paciente
-    const historiasKey = `historiasMedicas_${cita.paciente}`;
-    const historias = JSON.parse(localStorage.getItem(historiasKey) || '[]');
-    
-    // Verificar si ya existe una historia para esta cita
-    const index = historias.findIndex(h => h.citaId === citaId);
-    if (index !== -1) {
-      historias[index] = infoMedica;
-    } else {
-      historias.push(infoMedica);
-    }
-    
-    localStorage.setItem(historiasKey, JSON.stringify(historias));
-
-    // NUEVO: Guardar también en el formato que AppointmentsList espera (medicalHistories)
-    const medicalHistories = JSON.parse(localStorage.getItem('medicalHistories') || '[]');
-    
-    // Crear el registro médico para AppointmentsList
-    const medicalRecord = {
-      citaId,
-      pacienteId: cita.paciente,
-      medicoId: medicoData.identificacion,
-      // AGREGAR INFORMACIÓN COMPLETA DEL MÉDICO
-      medico: {
-        identificacion: medicoData.identificacion,
-        nombre: medicoData.nombre,
-        apellido: medicoData.apellido || '',
-        especialidad: medicoData.especialidad,
-        sede: medicoData.sede || 'No especificada'
-      },
-      motivoConsulta: formData.motivoConsulta,
-      antecedentesMedicos: formData.historiaClinica,
-      diagnostico: formData.diagnostico,
-      ordenesMedicas: [
-        ...formData.ordenesClinicas.laboratorios.map(l => `${l.codigo} - ${l.descripcion}`),
-        ...formData.ordenesClinicas.imagenesDiagnosticas.map(i => `${i.codigo} - ${i.descripcion}`),
-        ...formData.ordenesClinicas.interconsultas.map(ic => `${ic.codigo} - ${ic.descripcion}`)
-      ].join('; '),
-      medicamentos: formData.medicamentos.map(m => 
-        `${m.nombre} ${m.dosis} ${m.frecuencia} (${m.via}) - ${m.duracion}`
-      ).join('; '),
-      incapacidadMedica: formData.incapacidadMedica.tieneIncapacidad ? 
-        `${formData.incapacidadMedica.dias} días - ${formData.incapacidadMedica.motivo} (${formData.incapacidadMedica.fechaInicio} a ${formData.incapacidadMedica.fechaFin})` : '',
-      recomendaciones: formData.recomendaciones,
-      observaciones: formData.observaciones,
-      fechaAtencion: new Date().toISOString(),
-      fechaCita: cita.fecha,
-      horaCita: cita.hora
-    };
-
-    // Verificar si ya existe un registro para esta cita
-    const medicalIndex = medicalHistories.findIndex(h => h.citaId === citaId);
-    if (medicalIndex !== -1) {
-      medicalHistories[medicalIndex] = medicalRecord;
-    } else {
-      medicalHistories.push(medicalRecord);
-    }
-    
-    localStorage.setItem('medicalHistories', JSON.stringify(medicalHistories));
-
-    // Forzar actualización del dashboard emitiendo un evento personalizado
-    window.dispatchEvent(new Event('medicalDataUpdated'));
-
-    // NAVEGACIÓN FORZADA - MÚLTIPLES MÉTODOS
     try {
-      // Método 1: navigate inmediato
+      // Guardar historia clínica en la BD y marcar cita como atendida (DB es la fuente de verdad)
+      await appointmentsServiceFull.attendAppointment(citaId, infoMedica);
+      // Marcar en sessionStorage la última cita atendida para forzar el cambio inmediato del botón en el dashboard
+      try {
+        sessionStorage.setItem('justAttendedAppointment', String(citaId));
+      } catch (err) {
+        // Si sessionStorage no está disponible, continuamos sin bloquear el flujo
+        console.warn('No se pudo escribir en sessionStorage:', err?.message || err)
+      }
+      // Disparar evento para que el dashboard recargue desde la BD
+      window.dispatchEvent(new Event('medicalDataUpdated'));
+      // Navegar al dashboard
       navigate('/dashboard-medico', { replace: true });
-      
-      // Método 2: Si navigate falla, usar window.location (forzado)
-      setTimeout(() => {
-        window.location.href = '/dashboard-medico';
-      }, 50);
-      
-      // Método 3: Si todo falla, usar history
-      setTimeout(() => {
-        window.history.pushState({}, '', '/dashboard-medico');
-        window.location.reload();
-      }, 100);
-      
-    } catch {
-      // Forzar navegación con window.location como último recurso
-      window.location.href = '/dashboard-medico';
+    } catch (e) {
+      console.error('[AtencionMedica] Error guardando historia clínica en BD', e);
+      alert('No se pudo guardar la historia clínica. Intente nuevamente.');
     }
   };
 

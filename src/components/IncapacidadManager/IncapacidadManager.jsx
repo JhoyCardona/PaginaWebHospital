@@ -62,7 +62,9 @@ const IncapacidadManager = ({ incapacidadData, onIncapacidadChange, fechaCita })
     };
     
     onIncapacidadChange(incapacidadInfo);
-  }, [dias, motivo, fechaInicio, fechaFin, onIncapacidadChange]);
+    // Nota: evitamos depender de onIncapacidadChange para no provocar efectos en bucle
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dias, motivo, fechaInicio, fechaFin]);
 
   const handleDiasChange = (e) => {
     const value = e.target.value;
