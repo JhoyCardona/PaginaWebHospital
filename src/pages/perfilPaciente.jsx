@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Card, Button, Row, Col, Alert, Table, Badge, Tab, Tabs } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import PDFService from '../services/pdfServiceWorking';
+import api from '../services/api';
 import '../styles/perfilPaciente.css';
 
 const PerfilPaciente = () => {
@@ -22,53 +23,64 @@ const PerfilPaciente = () => {
       return;
     }
 
-    const cargarDatosPaciente = () => {
-      // Obtener datos del paciente desde currentUserData primero
-      const currentUserData = JSON.parse(localStorage.getItem('currentUserData') || 'null');
-      if (currentUserData && currentUserData.id === pacienteId) {
-        setPacienteData(currentUserData);
-      } else {
-        // Fallback: buscar en users o registeredUsers
-        const usuarios = JSON.parse(localStorage.getItem('users') || '[]');
-        let paciente = usuarios.find(u => u.id === pacienteId);
-        
-        if (!paciente) {
-          const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-          const user = registeredUsers.find(u => u.userId === pacienteId);
-          if (user) {
-            paciente = {
-              id: user.userId,
-              firstName: user.nombre,
-              lastName: user.apellido,
-              email: user.email,
-              phone: user.telefono,
-              tipoId: user.tipoId,
-              createdAt: user.fechaRegistro
-            };
+    const cargarDatosPaciente = async () => {
+      try {
+        // 1) Intentar obtener datos del paciente desde currentUserData
+        const currentUserData = JSON.parse(localStorage.getItem('currentUserData') || 'null');
+        if (currentUserData && (currentUserData.id === pacienteId || currentUserData.userId === pacienteId)) {
+          setPacienteData(currentUserData);
+        } else {
+          // 2) Intentar pedir al endpoint users.php
+          try {
+            const userResp = await api.getUser(pacienteId);
+            if (userResp) {
+              // normalizar nombres usados en UI
+              const normalized = {
+                id: userResp.user_id || userResp.id || pacienteId,
+                firstName: userResp.nombre || userResp.firstName || '',
+                lastName: userResp.apellido || userResp.lastName || '',
+                email: userResp.email || '',
+                phone: userResp.telefono || userResp.phone || '',
+                tipoId: userResp.tipo_id || userResp.tipoId || ''
+              };
+              setPacienteData(normalized);
+            } else {
+              // fallback a currentUserData si existe
+              if (currentUserData) setPacienteData(currentUserData);
+            }
+          } catch (e) {
+            // Si falla la petición, usar currentUserData como fallback
+            if (currentUserData) setPacienteData(currentUserData);
           }
         }
-        
-        if (paciente) {
-          setPacienteData(paciente);
+  
+        // 3) Cargar historias clínicas desde la API
+        try {
+          const historias = await api.getHistorias({ paciente: pacienteId });
+          if (Array.isArray(historias) && historias.length > 0) {
+            setHistoriasMedicas(historias);
+          } else {
+            // fallback a localStorage si API no devuelve
+            const historiasLS = JSON.parse(localStorage.getItem('historiasClinicas') || '[]').filter(h => h.pacienteId === pacienteId);
+            setHistoriasMedicas(historiasLS);
+          }
+        } catch (e) {
+          const historiasLS = JSON.parse(localStorage.getItem('historiasClinicas') || '[]').filter(h => h.pacienteId === pacienteId);
+          setHistoriasMedicas(historiasLS);
         }
+  
+        // 4) Cargar citas desde la API
+        try {
+          const citas = await api.getAppointments({ paciente: pacienteId });
+          setCitasPaciente(Array.isArray(citas) ? citas : []);
+        } catch (e) {
+          const todasLasCitas = JSON.parse(localStorage.getItem('citas') || '[]');
+          const citasDelPaciente = todasLasCitas.filter(cita => cita.paciente === pacienteId);
+          setCitasPaciente(citasDelPaciente);
+        }
+      } catch (err) {
+        console.error('Error cargando datos del paciente', err);
       }
-
-      // Cargar historias médicas desde el sistema centralizado
-      const todasLasHistorias = JSON.parse(localStorage.getItem('historiasClinicas') || '[]');
-      const historiasDelPaciente = todasLasHistorias.filter(h => h.pacienteId === pacienteId);
-      setHistoriasMedicas(historiasDelPaciente);
-      
-      // Fallback: cargar desde sistema anterior si no hay historias centralizadas
-      if (historiasDelPaciente.length === 0) {
-        const historiasKey = `historiasMedicas_${pacienteId}`;
-        const historias = JSON.parse(localStorage.getItem(historiasKey) || '[]');
-        setHistoriasMedicas(historias);
-      }
-
-      // Cargar citas del paciente
-      const todasLasCitas = JSON.parse(localStorage.getItem('citas') || '[]');
-      const citasDelPaciente = todasLasCitas.filter(cita => cita.paciente === pacienteId);
-      setCitasPaciente(citasDelPaciente);
     };
 
     cargarDatosPaciente();

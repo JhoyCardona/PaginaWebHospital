@@ -1,146 +1,157 @@
-import React, { useState } from 'react';
-import { Container, Card, Button, Form, Modal, Row, Col, Alert } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react'
+import api from '../services/api'
+import { Container, Card, Button, Form, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import '../styles/loginMedicos.css';
 
 const LoginMedicos = () => {
   const navigate = useNavigate();
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [loginData, setLoginData] = useState({
+  const [sedes, setSedes] = useState([])
+  const [medicos, setMedicos] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('login'); // 'login' o 'register'
+  
+  // Formulario de login
+  const [loginForm, setLoginForm] = useState({
     identificacion: '',
     password: ''
   });
-  const [registerData, setRegisterData] = useState({
+
+  // Formulario de registro
+  const [form, setForm] = useState({
     identificacion: '',
     nombre: '',
     apellido: '',
     especialidad: '',
-    sede: '',
-    password: '',
-    confirmPassword: ''
-  });
+    sede_id: '',
+    password: ''
+  })
   const [alert, setAlert] = useState({ show: false, message: '', type: '' });
 
-  // Sedes disponibles
-  const sedes = [
-    { id: 'confama', name: 'CIS Confama Manrique' },
-    { id: 'cis_centro', name: 'CIS Central - Medellín' },
-    { id: 'cis_norte', name: 'CIS Zona Norte - Bello' }
-  ];
-
-  // Especialidades médicas
+  // Lista de especialidades por defecto (evita undefined)
   const especialidades = [
     'Medicina General',
     'Pediatría',
-    'Medicina Familiar',
-    'Nutrición',
+    'Ginecología',
     'Cardiología',
     'Dermatología',
-    'Ginecología',
     'Neurología',
     'Psiquiatría',
+    'Oftalmología',
     'Ortopedia'
-  ];
+  ]
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const s = await api.listSedes()
+        setSedes(Array.isArray(s) ? s : [])
+        if (Array.isArray(s) && s.length > 0) {
+          setForm(f => ({ ...f, sede_id: s[0].id }))
+        }
+      } catch (err) {
+        console.error('Error cargando sedes', err)
+        setSedes([])
+      }
+
+      try {
+        const m = await api.listMedicos()
+        setMedicos(Array.isArray(m) ? m : [])
+      } catch (err) {
+        console.error('Error cargando medicos', err)
+        setMedicos([])
+      }
+    }
+
+    load()
+  }, [])
 
   const showAlert = (message, type) => {
     setAlert({ show: true, message, type });
     setTimeout(() => setAlert({ show: false, message: '', type: '' }), 5000);
   };
 
-  const authenticateMedico = (identificacion, password) => {
-    const medicos = JSON.parse(localStorage.getItem('medicos') || '[]');
-    return medicos.find(medico => medico.identificacion === identificacion && medico.password === password);
-  };
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    const { identificacion, password } = loginData;
-
-    if (!identificacion || !password) {
-      showAlert('Por favor, complete todos los campos.', 'danger');
-      return;
-    }
-
-    const medico = authenticateMedico(identificacion, password);
-    if (medico) {
-      localStorage.setItem('isMedicoLoggedIn', 'true');
-      localStorage.setItem('medicoId', identificacion);
-      localStorage.setItem('medicoData', JSON.stringify(medico));
-      navigate('/dashboard-medico');
-    } else {
-      showAlert('Credenciales incorrectas. Verifique su número de identificación y contraseña.', 'danger');
-    }
-  };
-
-  const handleRegister = (e) => {
-    e.preventDefault();
-    const { identificacion, nombre, apellido, especialidad, sede, password, confirmPassword } = registerData;
-
-    // Validaciones
-    if (!identificacion || !nombre || !apellido || !especialidad || !sede || !password || !confirmPassword) {
-      showAlert('Por favor, complete todos los campos.', 'danger');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      showAlert('Las contraseñas no coinciden.', 'danger');
-      return;
-    }
-
-    if (password.length < 6) {
-      showAlert('La contraseña debe tener al menos 6 caracteres.', 'danger');
-      return;
-    }
-
-    // Verificar si el médico ya existe
-    const medicos = JSON.parse(localStorage.getItem('medicos') || '[]');
-    if (medicos.find(medico => medico.identificacion === identificacion)) {
-      showAlert('Ya existe un médico registrado con este número de identificación.', 'danger');
-      return;
-    }
-
-    // Registrar nuevo médico
-    const nuevoMedico = {
-      identificacion,
-      nombre,
-      apellido,
-      especialidad,
-      sede,
-      password,
-      fechaRegistro: new Date().toISOString()
-    };
-
-    medicos.push(nuevoMedico);
-    localStorage.setItem('medicos', JSON.stringify(medicos));
-
-    showAlert('¡Registro exitoso! Ya puede iniciar sesión con sus credenciales.', 'success');
-    setShowRegisterModal(false);
-    setRegisterData({
-      identificacion: '',
-      nombre: '',
-      apellido: '',
-      especialidad: '',
-      sede: '',
-      password: '',
-      confirmPassword: ''
-    });
-  };
-
   const handleLoginChange = (e) => {
-    const { name, value } = e.target;
-    setLoginData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+    const { name, value } = e.target
+    setLoginForm(f => ({ ...f, [name]: value }))
+  }
 
-  const handleRegisterChange = (e) => {
-    const { name, value } = e.target;
-    setRegisterData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault()
+    const { identificacion, password } = loginForm
+    
+    if (!identificacion.trim() || !password) {
+      showAlert('Por favor complete todos los campos.', 'danger');
+      return
+    }
+
+    setLoading(true)
+    try {
+      const resp = await api.loginMedico(identificacion.trim(), password)
+      if (resp?.success && resp.medicoData) {
+        // Guardar sesión del médico
+        localStorage.setItem('isMedicoLoggedIn', 'true')
+        localStorage.setItem('medicoId', resp.medicoData.identificacion)
+        localStorage.setItem('medicoData', JSON.stringify(resp.medicoData))
+        
+        showAlert('Inicio de sesión exitoso', 'success');
+        setTimeout(() => navigate('/dashboard-medico'), 1000)
+      } else {
+        showAlert('Credenciales incorrectas.', 'danger');
+      }
+    } catch (err) {
+      console.error(err)
+      
+      // Verificar si es un error de bloqueo
+      if (err.body && err.body.blocked) {
+        const minutes = Math.ceil(err.body.remainingSeconds / 60);
+        showAlert(`Cuenta bloqueada por múltiples intentos fallidos. Intente nuevamente en ${minutes} minuto(s).`, 'danger');
+      } else {
+        showAlert('Error al iniciar sesión: ' + (err.message || 'Intente de nuevo'), 'danger');
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm(f => ({ ...f, [name]: value }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!form.identificacion || !form.nombre || !form.apellido || !form.especialidad) {
+      showAlert('Completa los campos requeridos.', 'danger');
+      return
+    }
+    setLoading(true)
+    try {
+      const payload = {
+        identificacion: form.identificacion.trim(),
+        nombre: form.nombre.trim(),
+        apellido: form.apellido.trim(),
+        especialidad: form.especialidad.trim(),
+        sede_id: form.sede_id ? Number(form.sede_id) : null,
+        password: form.password || null
+      }
+      const res = await api.createMedico(payload)
+      if (res && res.success) {
+        showAlert('Médico creado correctamente.', 'success');
+        // refrescar lista
+        const m = await api.listMedicos()
+        setMedicos(Array.isArray(m) ? m : [])
+        setForm({ identificacion: '', nombre: '', apellido: '', especialidad: '', sede_id: form.sede_id, password: '' })
+      } else {
+        showAlert('Error creando médico.', 'danger');
+      }
+    } catch (err) {
+      console.error(err)
+      showAlert('Error: ' + (err.message || 'no se pudo crear'), 'danger');
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="login-medicos-background">
@@ -151,7 +162,7 @@ const LoginMedicos = () => {
           </Alert>
         )}
         
-        <Card className="login-card shadow-lg">
+        <Card className="login-card shadow-lg" style={{ maxWidth: '500px', width: '100%' }}>
           <Card.Body className="p-5">
             <div className="text-center mb-4">
               <i className="fas fa-user-md text-primary" style={{ fontSize: '4rem' }}></i>
@@ -159,53 +170,149 @@ const LoginMedicos = () => {
               <p className="text-muted">Acceso exclusivo para profesionales de la salud</p>
             </div>
 
-            <Form onSubmit={handleLogin}>
-              <Row className="mb-3">
-                <Col>
-                  <Form.Label>Número de Identificación</Form.Label>
+            {/* Tabs */}
+            <div className="d-flex mb-4" style={{ borderBottom: '2px solid #e0e0e0' }}>
+              <button
+                type="button"
+                className={`flex-fill btn btn-link text-decoration-none ${activeTab === 'login' ? 'fw-bold' : ''}`}
+                style={{ 
+                  borderBottom: activeTab === 'login' ? '3px solid #007bff' : 'none',
+                  color: activeTab === 'login' ? '#007bff' : '#6c757d'
+                }}
+                onClick={() => setActiveTab('login')}
+              >
+                Iniciar Sesión
+              </button>
+              <button
+                type="button"
+                className={`flex-fill btn btn-link text-decoration-none ${activeTab === 'register' ? 'fw-bold' : ''}`}
+                style={{ 
+                  borderBottom: activeTab === 'register' ? '3px solid #007bff' : 'none',
+                  color: activeTab === 'register' ? '#007bff' : '#6c757d'
+                }}
+                onClick={() => setActiveTab('register')}
+              >
+                Registrarse
+              </button>
+            </div>
+
+            {/* Login Form */}
+            {activeTab === 'login' && (
+              <Form onSubmit={handleLoginSubmit}>
+                <div className="mb-3">
+                  <Form.Label>Identificación</Form.Label>
                   <Form.Control
                     type="text"
                     name="identificacion"
-                    value={loginData.identificacion}
+                    value={loginForm.identificacion}
                     onChange={handleLoginChange}
-                    className="form-control-lg"
                     placeholder="Ingrese su número de identificación"
+                    autoComplete="username"
                   />
-                </Col>
-              </Row>
+                </div>
 
-              <Row className="mb-4">
-                <Col>
+                <div className="mb-4">
                   <Form.Label>Contraseña</Form.Label>
                   <Form.Control
                     type="password"
                     name="password"
-                    value={loginData.password}
+                    value={loginForm.password}
                     onChange={handleLoginChange}
-                    className="form-control-lg"
                     placeholder="Ingrese su contraseña"
+                    autoComplete="current-password"
                   />
-                </Col>
-              </Row>
+                </div>
 
-              <div className="d-grid gap-2 mb-4">
-                <Button type="submit" className="btn-lg btn-login-medico">
-                  <i className="fas fa-sign-in-alt me-2"></i>
-                  Iniciar Sesión
-                </Button>
+                <div className="d-grid gap-2 mb-3">
+                  <Button type="submit" className="btn-lg btn-login-medico" disabled={loading}>
+                    {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                  </Button>
+                </div>
+              </Form>
+            )}
+
+            {/* Register Form */}
+            {activeTab === 'register' && (
+              <Form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <Form.Label>Identificación</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="identificacion"
+                  value={form.identificacion}
+                  onChange={handleChange}
+                  placeholder="Ingrese su número de identificación"
+                />
               </div>
-            </Form>
 
-            <div className="text-center">
-              <p className="mb-2">¿Aún no está registrado?</p>
-              <Button 
-                variant="link" 
-                className="link-register-medico p-0"
-                onClick={() => setShowRegisterModal(true)}
-              >
-                Registrarse como Médico
-              </Button>
-            </div>
+              <div className="mb-3">
+                <Form.Label>Nombre</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="nombre"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  placeholder="Ingrese su nombre"
+                />
+              </div>
+
+              <div className="mb-3">
+                <Form.Label>Apellido</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="apellido"
+                  value={form.apellido}
+                  onChange={handleChange}
+                  placeholder="Ingrese su apellido"
+                />
+              </div>
+
+              <div className="mb-3">
+                <Form.Label>Especialidad</Form.Label>
+                <Form.Select
+                  name="especialidad"
+                  value={form.especialidad}
+                  onChange={handleChange}
+                >
+                  <option value="">Seleccione especialidad</option>
+                  {especialidades.map((esp, index) => (
+                    <option key={index} value={esp}>{esp}</option>
+                  ))}
+                </Form.Select>
+              </div>
+
+              <div className="mb-3">
+                <Form.Label>Sede</Form.Label>
+                <Form.Select
+                  name="sede_id"
+                  value={form.sede_id}
+                  onChange={handleChange}
+                >
+                  <option value="">Seleccione una sede</option>
+                  {sedes.map(sede => (
+                    <option key={sede.id} value={sede.id}>{sede.name}</option>
+                  ))}
+                </Form.Select>
+              </div>
+
+              <div className="mb-4">
+                <Form.Label>Contraseña (opcional)</Form.Label>
+                <Form.Control
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Ingrese una contraseña"
+                />
+              </div>
+
+                <div className="d-grid gap-2 mb-4">
+                  <Button type="submit" className="btn-lg btn-login-medico" disabled={loading}>
+                    {loading ? 'Guardando...' : 'Registrar médico'}
+                  </Button>
+                </div>
+              </Form>
+            )}
 
             <div className="text-center mt-4">
               <Button 
@@ -218,127 +325,33 @@ const LoginMedicos = () => {
             </div>
           </Card.Body>
         </Card>
-
-        {/* Modal de Registro */}
-        <Modal show={showRegisterModal} onHide={() => setShowRegisterModal(false)} size="lg" centered>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              <i className="fas fa-user-plus me-2"></i>
-              Registro de Médico
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form onSubmit={handleRegister}>
-              <Row className="mb-3">
-                <Col md={6}>
-                  <Form.Label>Número de Identificación*</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="identificacion"
-                    value={registerData.identificacion}
-                    onChange={handleRegisterChange}
-                    placeholder="Número de identificación"
-                    required
-                  />
-                </Col>
-                <Col md={6}>
-                  <Form.Label>Nombre*</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="nombre"
-                    value={registerData.nombre}
-                    onChange={handleRegisterChange}
-                    placeholder="Nombre completo"
-                    required
-                  />
-                </Col>
-              </Row>
-
-              <Row className="mb-3">
-                <Col md={6}>
-                  <Form.Label>Apellido*</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="apellido"
-                    value={registerData.apellido}
-                    onChange={handleRegisterChange}
-                    placeholder="Apellido completo"
-                    required
-                  />
-                </Col>
-                <Col md={6}>
-                  <Form.Label>Especialidad*</Form.Label>
-                  <Form.Select
-                    name="especialidad"
-                    value={registerData.especialidad}
-                    onChange={handleRegisterChange}
-                    required
-                  >
-                    <option value="">Seleccione especialidad</option>
-                    {especialidades.map((esp, index) => (
-                      <option key={index} value={esp}>{esp}</option>
-                    ))}
-                  </Form.Select>
-                </Col>
-              </Row>
-
-              <Row className="mb-3">
-                <Col>
-                  <Form.Label>Sede de Trabajo*</Form.Label>
-                  <Form.Select
-                    name="sede"
-                    value={registerData.sede}
-                    onChange={handleRegisterChange}
-                    required
-                  >
-                    <option value="">Seleccione sede</option>
-                    {sedes.map(sede => (
-                      <option key={sede.id} value={sede.id}>{sede.name}</option>
-                    ))}
-                  </Form.Select>
-                </Col>
-              </Row>
-
-              <Row className="mb-3">
-                <Col md={6}>
-                  <Form.Label>Contraseña*</Form.Label>
-                  <Form.Control
-                    type="password"
-                    name="password"
-                    value={registerData.password}
-                    onChange={handleRegisterChange}
-                    placeholder="Mínimo 6 caracteres"
-                    required
-                  />
-                </Col>
-                <Col md={6}>
-                  <Form.Label>Confirmar Contraseña*</Form.Label>
-                  <Form.Control
-                    type="password"
-                    name="confirmPassword"
-                    value={registerData.confirmPassword}
-                    onChange={handleRegisterChange}
-                    placeholder="Confirme su contraseña"
-                    required
-                  />
-                </Col>
-              </Row>
-
-              <div className="text-end">
-                <Button variant="secondary" className="me-2" onClick={() => setShowRegisterModal(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" className="btn-register-medico">
-                  <i className="fas fa-user-plus me-2"></i>
-                  Registrarse
-                </Button>
-              </div>
-            </Form>
-          </Modal.Body>
-        </Modal>
       </Container>
     </div>
-  );
-};
+  )
+}
 
-export default LoginMedicos;
+const MedicosList = ({ medicos }) => {
+  if (!medicos || medicos.length === 0) return <div>No hay médicos registrados.</div>
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
+      <thead>
+        <tr style={{ textAlign: 'left' }}>
+          <th>Identificación</th><th>Nombre</th><th>Apellido</th><th>Especialidad</th><th>Sede</th>
+        </tr>
+      </thead>
+      <tbody>
+        {medicos.map(m => (
+          <tr key={m.id}>
+            <td>{m.identificacion}</td>
+            <td>{m.nombre}</td>
+            <td>{m.apellido}</td>
+            <td>{m.especialidad}</td>
+            <td>{m.sede_nombre || m.sede_id}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+export default LoginMedicos

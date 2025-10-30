@@ -1,210 +1,149 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import Calendar from '../components/Calendar/Calendar'
-import TimeSlots from '../components/TimeSlots/TimeSlots'
-import AppointmentsList from '../components/AppointmentsList/AppointmentsList'
+import api from '../services/api'
 import '../styles/agendaCitas.css'
 
 const AgendaCitas = () => {
   const navigate = useNavigate()
-  const { logout } = useAuth()
-  
-  // Estados del calendario
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-  const [selectedDate, setSelectedDate] = useState(null)
-  
-  // Estados de selección
-  const [selectedPlace, setSelectedPlace] = useState('')
-  const [selectedProfessional, setSelectedProfessional] = useState('')
-  
-  // Estado de tabs
-  const [activeTab, setActiveTab] = useState('info')
-  
-  // Usuario actual
-  const [currentUserId, setCurrentUserId] = useState(null)
-  const [userData, setUserData] = useState(null)
-  const [medicosRegistrados, setMedicosRegistrados] = useState({})
-
-  // Datos de lugares 
-  const places = [
-    { id: 'confama', name: 'CIS Confama Manrique' },
-    { id: 'cis_centro', name: 'CIS Central - Medellín' },
-    { id: 'cis_norte', name: 'CIS Zona Norte - Bello' }
-  ]
-
-  // Cargar médicos registrados desde localStorage
-  const cargarMedicosRegistrados = () => {
-    const medicos = JSON.parse(localStorage.getItem('medicos') || '[]')
-    const medicosPorSede = {}
-    
-    // Agrupar médicos por sede
-    medicos.forEach(medico => {
-      if (!medicosPorSede[medico.sede]) {
-        medicosPorSede[medico.sede] = []
-      }
-      medicosPorSede[medico.sede].push({
-        id: medico.identificacion,
-        name: `Dr(a). ${medico.nombre} ${medico.apellido} (${medico.especialidad})`,
-        identificacion: medico.identificacion,
-        especialidad: medico.especialidad
-      })
-    })
-    
-    // No usar médicos por defecto - solo mostrar médicos registrados
-    
-    setMedicosRegistrados(medicosPorSede)
-  }
+  const { user, logout } = useAuth()
+  const [selectedDate, setSelectedDate] = useState('') // yyyy-mm-dd
+  const [selectedTime, setSelectedTime] = useState('')
+  const [sedes, setSedes] = useState([])
+  const [selectedSede, setSelectedSede] = useState('')
+  const [selectedEspecialidad, setSelectedEspecialidad] = useState('')
+  const [availableMedicos, setAvailableMedicos] = useState([])
+  const [loadingMedicos, setLoadingMedicos] = useState(false)
+  const [booking, setBooking] = useState(false)
+  const [allMedicos, setAllMedicos] = useState([])
 
   useEffect(() => {
-    // Verificar autenticación
-    const isLoggedIn = localStorage.getItem('isLoggedIn')
-    const storedUserId = localStorage.getItem('userId')
-    
-    if (isLoggedIn !== 'true') {
-      navigate('/login')
-      return
-    }
-    
-    setCurrentUserId(storedUserId)
-    
-    // Cargar datos del usuario desde localStorage
-    if (storedUserId) {
-      const currentUserData = JSON.parse(localStorage.getItem('currentUserData') || 'null');
-      if (currentUserData) {
-        setUserData(currentUserData);
-      } else {
-        // Fallback: buscar en registeredUsers
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-        const user = registeredUsers.find(u => u.userId === storedUserId);
-        if (user) {
-          const userData = {
-            id: user.userId,
-            firstName: user.nombre,
-            lastName: user.apellido,
-            email: user.email,
-            phone: user.telefono,
-            tipoId: user.tipoId
-          };
-          setUserData(userData);
-        }
+    const loadSedes = async () => {
+      try {
+        const s = await api.getSedes()
+        setSedes(Array.isArray(s) ? s : [])
+        if (Array.isArray(s) && s.length > 0) setSelectedSede(String(s[0].id))
+      } catch (e) {
+        console.error('Error cargando sedes', e)
+        setSedes([])
       }
     }
-    
-    cargarMedicosRegistrados()
-  }, [navigate])
-
-  const handleLogout = () => {
-    if (window.confirm('¿Está seguro de que desea cerrar sesión?')) {
-      localStorage.removeItem('isLoggedIn')
-      localStorage.removeItem('userId')
-      logout()
-      navigate('/login')
+    const loadAllMedicos = async () => {
+      try {
+        const m = await api.listMedicos()
+        setAllMedicos(Array.isArray(m) ? m : [])
+      } catch (e) {
+        console.error('Error cargando medicos', e)
+        setAllMedicos([])
+      }
     }
-  }
+    loadSedes()
+    loadAllMedicos()
+  }, [])
 
-  const handlePrevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11)
-      setCurrentYear(currentYear - 1)
-    } else {
-      setCurrentMonth(currentMonth - 1)
+  // carga medicos disponibles cuando cambian fecha/hora/sede/especialidad
+  useEffect(() => {
+    const loadAvailable = async () => {
+      if (!selectedDate || !selectedTime || !selectedSede) {
+        setAvailableMedicos([])
+        return
+      }
+      setLoadingMedicos(true)
+      try {
+        const resp = await api.getAvailableMedicos({
+          fecha: selectedDate,
+          hora: selectedTime,
+          sede_id: selectedSede,
+          especialidad: selectedEspecialidad || ''
+        })
+        setAvailableMedicos(Array.isArray(resp) ? resp : [])
+      } catch (e) {
+        console.error('Error medicos disponibles', e)
+        setAvailableMedicos([])
+      } finally {
+        setLoadingMedicos(false)
+      }
     }
-    setSelectedDate(null)
+    loadAvailable()
+  }, [selectedDate, selectedTime, selectedSede, selectedEspecialidad])
+
+  // genera franjas horarias (ejemplo 08:00 - 17:00 cada 1h)
+  const hours = Array.from({ length: 10 }, (_, i) => {
+    const h = 8 + i
+    return `${String(h).padStart(2, '0')}:00`
+  })
+
+  const handleSedeChange = (e) => {
+    setSelectedSede(e.target.value)
   }
 
-  const handleNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0)
-      setCurrentYear(currentYear + 1)
-    } else {
-      setCurrentMonth(currentMonth + 1)
-    }
-    setSelectedDate(null)
-  }
-
-  const handleDateSelect = (day) => {
-    setSelectedDate(day)
-  }
-
-  const handlePlaceChange = (e) => {
-    setSelectedPlace(e.target.value)
-    setSelectedProfessional('') // Reset professional selection
-  }
-
-  const handleProfessionalChange = (e) => {
-    setSelectedProfessional(e.target.value)
+  const handleEspecialidadChange = (e) => {
+    setSelectedEspecialidad(e.target.value)
   }
 
   const getProfessionalsForPlace = (placeId) => {
-    return medicosRegistrados[placeId] || []
+    if (!placeId) return []
+    return allMedicos.filter(m => String(m.sede_id) === String(placeId))
   }
 
-  const handleConfirmAppointment = (time) => {
-    if (!selectedDate || !selectedPlace || !selectedProfessional || !currentUserId) {
-      alert('Error: Faltan datos para confirmar la cita.')
+  const handleBook = async (medico) => {
+    if (!selectedDate || !selectedTime || !selectedSede || !medico) {
+      alert('Completa fecha, hora, sede y profesional.')
       return
     }
+    setBooking(true)
+    try {
+      // 1) crear cita
+      const apptResp = await api.createAppointment({
+        paciente_user_id: user?.id || 2,
+        fecha: selectedDate,
+        hora: selectedTime,
+        place_id: Number(selectedSede),
+        medico_identificacion: medico.identificacion,
+        details: { origen: 'web' }
+      })
+      const apptId = apptResp?.id
+      if (!apptId) throw new Error('No se creó la cita en el servidor')
 
-    // Obtener información completa del médico seleccionado
-    const medicos = getProfessionalsForPlace(selectedPlace)
-    const medicoSeleccionado = medicos.find(m => m.id === selectedProfessional)
-
-    // Crear datos de la cita
-    const appointmentData = {
-      id: Date.now().toString(),
-      fecha: `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${selectedDate.toString().padStart(2, '0')}`,
-      hora: time,
-      lugar: selectedPlace,
-      medico: selectedProfessional,
-      medicoNombre: medicoSeleccionado?.name || 'Médico no encontrado',
-      medicoEspecialidad: medicoSeleccionado?.especialidad || 'Especialidad no definida',
-      paciente: currentUserId,
-      estado: 'confirmada',
-      tipo: 'CONSULTA MEDICINA GENERAL SALUD (CITA PRESENCIAL)',
-      fechaCreacion: new Date().toISOString()
+      // 2) crear slot (clave única)
+      const slotKey = `${selectedDate}_${selectedTime}_${selectedSede}_${medico.identificacion}`
+      try {
+        await api.createSlot({
+          slot_key: slotKey,
+          fecha: selectedDate,
+          hora: selectedTime,
+          place_id: Number(selectedSede),
+          professional_identificacion: medico.identificacion,
+          appointment_id: apptId
+        })
+        alert('Cita confirmada.')
+        // refrescar medicos disponibles para quitar al reservado
+        const updated = availableMedicos.filter(m => m.identificacion !== medico.identificacion)
+        setAvailableMedicos(updated)
+      } catch (err) {
+        // rollback: eliminar cita creada
+        try { await api.deleteAppointment(apptId) } catch (e) { console.warn('rollback failed', e) }
+        const is409 = err && (err.status === 409 || (err.message && err.message.includes('Slot already')) )
+        if (is409) {
+          alert('El turno ya fue ocupado por otro usuario. Elige otro horario.')
+        } else {
+          alert('Error reservando el turno. Intenta de nuevo.')
+        }
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error creando la cita: ' + (e.message || e))
+    } finally {
+      setBooking(false)
     }
-
-    // Guardar en citas del usuario
-    const userAppointments = JSON.parse(localStorage.getItem(`citasProgramadas_${currentUserId}`) || '[]')
-    userAppointments.push(appointmentData)
-    localStorage.setItem(`citasProgramadas_${currentUserId}`, JSON.stringify(userAppointments))
-
-    // NUEVA: Guardar también en citas generales para que los médicos las vean
-    const allAppointments = JSON.parse(localStorage.getItem('citas') || '[]')
-    allAppointments.push(appointmentData)
-    localStorage.setItem('citas', JSON.stringify(allAppointments))
-
-    // Marcar slot como ocupado
-    const occupiedSlots = JSON.parse(localStorage.getItem('occupiedSlots') || '{}')
-    const slotKey = `${selectedDate}_${time}_${selectedPlace}_${selectedProfessional}`
-    occupiedSlots[slotKey] = appointmentData
-    localStorage.setItem('occupiedSlots', JSON.stringify(occupiedSlots))
-
-    // Mostrar confirmación
-    alert('✅ ¡Cita confirmada exitosamente!\n\n' +
-          `Fecha: ${appointmentData.fecha}\n` +
-          `Hora: ${time}\n` +
-          `Lugar: ${places.find(p => p.id === selectedPlace)?.name}\n` +
-          `Profesional: ${getProfessionalsForPlace(selectedPlace).find(p => p.id === selectedProfessional)?.name}`)
-
-    // Limpiar selecciones
-    setSelectedDate(null)
-    setSelectedPlace('')
-    setSelectedProfessional('')
-  }
-
-  const handleCancelAppointment = () => {
-    // La lógica ya está en el componente AppointmentsList
   }
 
   return (
     <div className="container my-5">
       <h1 className="text-center mb-4 main-title">Portal de Agendamiento de Citas</h1>
-      
+
       <div className="d-flex justify-content-end mb-3">
-        <button className="btn btn-danger cerrar-sesion" onClick={handleLogout}>
+        <button className="btn btn-danger cerrar-sesion" onClick={logout}>
           Cerrar sesión
         </button>
       </div>
@@ -216,116 +155,105 @@ const AgendaCitas = () => {
         <div className="card-body">
           <div className="row afiliado-info">
             <div className="col-md-3">
-              <strong>Afiliado:</strong> <span>CC {userData?.id || currentUserId || 'N/A'}</span>
+              <strong>Afiliado:</strong> <span>CC {user?.id || 'N/A'}</span>
             </div>
             <div className="col-md-3">
-              <strong>Nombres:</strong> <span>{userData?.firstName || 'N/A'}</span>
+              <strong>Nombres:</strong> <span>{user?.firstName || 'N/A'}</span>
             </div>
             <div className="col-md-3">
-              <strong>Apellidos:</strong> <span>{userData?.lastName || 'N/A'}</span>
+              <strong>Apellidos:</strong> <span>{user?.lastName || 'N/A'}</span>
             </div>
             <div className="col-md-3">
-              <strong>Email:</strong> <span>{userData?.email || 'N/A'}</span>
-            </div>
-          </div>
-          <div className="row afiliado-info mt-2">
-            <div className="col-md-4">
-              <strong>Teléfono:</strong> <span>{userData?.phone || 'N/A'}</span>
-            </div>
-            <div className="col-md-8">
-              <strong>Servicio:</strong> CONSULTA MEDICINA GENERAL SALUD (CITA PRESENCIAL)
+              <strong>Email:</strong> <span>{user?.email || 'N/A'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="card shadow-lg cita-card">
-        {/* Contenedor de botones de tabs */}
-        <div className="tab-buttons-container">
-          <button 
-            className={`tab-button ${activeTab === 'info' ? 'active' : ''}`}
-            onClick={() => setActiveTab('info')}
+      <div className="row g-3 mb-4">
+        <div className="col-md-12">
+          <label className="form-label fw-bold">Sede</label>
+          <select 
+            className="form-select form-select-lg" 
+            value={selectedSede} 
+            onChange={handleSedeChange}
           >
-            <i className="fas fa-calendar-plus me-2"></i>Información de citas
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'programadas' ? 'active' : ''}`}
-            onClick={() => setActiveTab('programadas')}
-          >
-            <i className="fas fa-calendar-check me-2"></i>Citas programadas
-          </button>
+            <option value="">Sede Central</option>
+            {sedes.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
+          </select>
         </div>
-        
-        <div className="card-body">
-          {/* Contenido del tab de Información */}
-          {activeTab === 'info' && (
-            <div className="tab-content active">
-              <div className="row mb-4 align-items-end">
-                <div className="col-md-6 mb-3 mb-md-0">
-                  <label htmlFor="lugarAtencion" className="form-label">Elige tu lugar de atención</label>
-                  <select 
-                    className="form-select form-select-lg" 
-                    value={selectedPlace}
-                    onChange={handlePlaceChange}
-                  >
-                    <option value="">Seleccione un lugar</option>
-                    {places.map(place => (
-                      <option key={place.id} value={place.id}>{place.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-md-6">
-                  <label htmlFor="profesional" className="form-label">Profesional</label>
-                  <select 
-                    className="form-select form-select-lg" 
-                    value={selectedProfessional}
-                    onChange={handleProfessionalChange}
-                    disabled={!selectedPlace}
-                  >
-                    <option value="">Seleccione un profesional</option>
-                    {selectedPlace && getProfessionalsForPlace(selectedPlace).map(prof => (
-                      <option key={prof.id} value={prof.id}>{prof.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="row">
-                <div className="col-lg-5 col-md-12 mb-4">
-                  <Calendar
-                    currentMonth={currentMonth}
-                    currentYear={currentYear}
-                    selectedDate={selectedDate}
-                    onDateSelect={handleDateSelect}
-                    onPrevMonth={handlePrevMonth}
-                    onNextMonth={handleNextMonth}
-                  />
-                </div>
-                
-                <div className="col-lg-7 col-md-12">
-                  <TimeSlots
-                    selectedDate={selectedDate}
-                    selectedPlace={selectedPlace}
-                    selectedProfessional={selectedProfessional}
-                    onConfirmAppointment={handleConfirmAppointment}
-                  />
-                </div>
-              </div>
-            </div>
+
+        <div className="col-md-12">
+          <label className="form-label fw-bold">Fecha</label>
+          <input 
+            type="date" 
+            className="form-control form-control-lg" 
+            value={selectedDate} 
+            onChange={e => setSelectedDate(e.target.value)} 
+          />
+        </div>
+
+        <div className="col-md-12">
+          <label className="form-label fw-bold">Especialidad (opcional)</label>
+          <select 
+            className="form-select form-select-lg" 
+            value={selectedEspecialidad} 
+            onChange={handleEspecialidadChange}
+          >
+            <option value="">Pediatría</option>
+            {Array.from(new Set(allMedicos.map(m => m.especialidad).filter(Boolean))).map(sp => (
+              <option key={sp} value={sp}>{sp}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-md-12">
+          <label className="form-label fw-bold">Hora</label>
+          <div className="d-flex gap-2 flex-wrap">
+            {hours.map(h => (
+              <button
+                key={h}
+                disabled={!selectedDate || !selectedSede || booking}
+                onClick={() => setSelectedTime(h)}
+                className={`btn ${selectedTime === h ? 'btn-primary' : 'btn-outline-secondary'}`}
+                style={{ minWidth: '80px' }}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="col-md-12 mt-4">
+          <h3 className="mb-3" style={{ color: 'var(--color-primary-blue)' }}>
+            Profesionales disponibles {loadingMedicos ? '(cargando...)' : ''}
+          </h3>
+          {availableMedicos.length === 0 && !loadingMedicos && (
+            <div className="alert alert-info">No hay profesionales disponibles para ese slot.</div>
           )}
-          
-          {/* Contenido del tab de Citas Programadas */}
-          {activeTab === 'programadas' && (
-            <div className="tab-content active">
-              <div className="row">
-                <div className="col-12">
-                  <AppointmentsList
-                    userId={currentUserId}
-                    onCancelAppointment={handleCancelAppointment}
-                  />
-                </div>
-              </div>
-            </div>
+          {availableMedicos.length > 0 && (
+            <ul className="list-unstyled">
+              {availableMedicos.map(m => (
+                <li key={m.identificacion} className="mb-3 p-3 border rounded bg-light">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong style={{ fontSize: '1.1rem', color: 'var(--color-primary-blue)' }}>
+                        {m.nombre} {m.apellido}
+                      </strong> — {m.especialidad || '—'}
+                      <br />
+                      <small className="text-muted">Sede {m.sede_nombre}</small>
+                    </div>
+                    <button 
+                      disabled={booking} 
+                      onClick={() => handleBook(m)}
+                      className="btn btn-primary"
+                    >
+                      Reservar
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>

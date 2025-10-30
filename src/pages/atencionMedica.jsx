@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import api from '../services/api';
 import CupsSelector from '../components/CupsSelector/CupsSelector';
 import MedicationTable from '../components/MedicationTable/MedicationTable';
 import IncapacidadManager from '../components/IncapacidadManager/IncapacidadManager';
@@ -93,109 +94,58 @@ function AtencionMedica() {
     }));
   };
 
-  const handleGuardar = () => {
-    // Guardar en localStorage para que aparezca en el perfil del paciente
-    const infoMedicaKey = `infoMedica_${cita.paciente}_${citaId}`;
-    const infoMedica = {
-      ...formData,
-      citaId,
-      fechaAtencion: new Date().toISOString(),
-      medico: {
-        identificacion: medicoData.identificacion,
-        nombre: medicoData.nombre,
-        apellido: medicoData.apellido,
-        especialidad: medicoData.especialidad,
-        sede: medicoData.sede
-      },
-      paciente: cita.paciente,
-      fechaCita: cita.fecha,
-      horaCita: cita.hora
-    };
-
-    localStorage.setItem(infoMedicaKey, JSON.stringify(infoMedica));
-
-    // También agregar a la lista general de historias médicas del paciente
-    const historiasKey = `historiasMedicas_${cita.paciente}`;
-    const historias = JSON.parse(localStorage.getItem(historiasKey) || '[]');
-    
-    // Verificar si ya existe una historia para esta cita
-    const index = historias.findIndex(h => h.citaId === citaId);
-    if (index !== -1) {
-      historias[index] = infoMedica;
-    } else {
-      historias.push(infoMedica);
-    }
-    
-    localStorage.setItem(historiasKey, JSON.stringify(historias));
-
-    // NUEVO: Guardar también en el formato que AppointmentsList espera (medicalHistories)
-    const medicalHistories = JSON.parse(localStorage.getItem('medicalHistories') || '[]');
-    
-    // Crear el registro médico para AppointmentsList
-    const medicalRecord = {
-      citaId,
-      pacienteId: cita.paciente,
-      medicoId: medicoData.identificacion,
-      // AGREGAR INFORMACIÓN COMPLETA DEL MÉDICO
-      medico: {
-        identificacion: medicoData.identificacion,
-        nombre: medicoData.nombre,
-        apellido: medicoData.apellido || '',
-        especialidad: medicoData.especialidad,
-        sede: medicoData.sede || 'No especificada'
-      },
-      motivoConsulta: formData.motivoConsulta,
-      antecedentesMedicos: formData.historiaClinica,
-      diagnostico: formData.diagnostico,
-      ordenesMedicas: [
-        ...formData.ordenesClinicas.laboratorios.map(l => `${l.codigo} - ${l.descripcion}`),
-        ...formData.ordenesClinicas.imagenesDiagnosticas.map(i => `${i.codigo} - ${i.descripcion}`),
-        ...formData.ordenesClinicas.interconsultas.map(ic => `${ic.codigo} - ${ic.descripcion}`)
-      ].join('; '),
-      medicamentos: formData.medicamentos.map(m => 
-        `${m.nombre} ${m.dosis} ${m.frecuencia} (${m.via}) - ${m.duracion}`
-      ).join('; '),
-      incapacidadMedica: formData.incapacidadMedica.tieneIncapacidad ? 
-        `${formData.incapacidadMedica.dias} días - ${formData.incapacidadMedica.motivo} (${formData.incapacidadMedica.fechaInicio} a ${formData.incapacidadMedica.fechaFin})` : '',
-      recomendaciones: formData.recomendaciones,
-      observaciones: formData.observaciones,
-      fechaAtencion: new Date().toISOString(),
-      fechaCita: cita.fecha,
-      horaCita: cita.hora
-    };
-
-    // Verificar si ya existe un registro para esta cita
-    const medicalIndex = medicalHistories.findIndex(h => h.citaId === citaId);
-    if (medicalIndex !== -1) {
-      medicalHistories[medicalIndex] = medicalRecord;
-    } else {
-      medicalHistories.push(medicalRecord);
-    }
-    
-    localStorage.setItem('medicalHistories', JSON.stringify(medicalHistories));
-
-    // Forzar actualización del dashboard emitiendo un evento personalizado
-    window.dispatchEvent(new Event('medicalDataUpdated'));
-
-    // NAVEGACIÓN FORZADA - MÚLTIPLES MÉTODOS
+  const handleGuardar = async () => {
     try {
-      // Método 1: navigate inmediato
-      navigate('/dashboard-medico', { replace: true });
+      // Preparar datos para la API
+      const historiaData = {
+        appointment_id: parseInt(citaId),
+        paciente_user_id: cita.paciente_user_id || cita.paciente,
+        medico_identificacion: medicoData.identificacion,
+        fecha_cita: cita.fecha,
+        hora_cita: cita.hora,
+        motivo_consulta: formData.motivoConsulta,
+        historia_clinica: formData.historiaClinica,
+        diagnostico: formData.diagnostico,
+        recomendaciones: formData.recomendaciones,
+        observaciones: formData.observaciones,
+        medicamentos: formData.medicamentos,
+        ordenes_medicas: formData.ordenesClinicas,
+        incapacidad_medica: formData.incapacidadMedica
+      };
+
+      // Guardar en la base de datos
+      const response = await api.saveHistoriaClinica(historiaData);
       
-      // Método 2: Si navigate falla, usar window.location (forzado)
-      setTimeout(() => {
-        window.location.href = '/dashboard-medico';
-      }, 50);
-      
-      // Método 3: Si todo falla, usar history
-      setTimeout(() => {
-        window.history.pushState({}, '', '/dashboard-medico');
-        window.location.reload();
-      }, 100);
-      
-    } catch {
-      // Forzar navegación con window.location como último recurso
-      window.location.href = '/dashboard-medico';
+      if (response && response.success) {
+        // MANTENER localStorage como respaldo
+        const infoMedicaKey = `infoMedica_${cita.paciente}_${citaId}`;
+        const infoMedica = {
+          ...formData,
+          citaId,
+          fechaAtencion: new Date().toISOString(),
+          medico: {
+            identificacion: medicoData.identificacion,
+            nombre: medicoData.nombre,
+            apellido: medicoData.apellido,
+            especialidad: medicoData.especialidad,
+            sede: medicoData.sede
+          },
+          paciente: cita.paciente,
+          fechaCita: cita.fecha,
+          horaCita: cita.hora
+        };
+        localStorage.setItem(infoMedicaKey, JSON.stringify(infoMedica));
+
+        alert('Información médica guardada exitosamente');
+        
+        // Redirigir al dashboard
+        navigate('/dashboard-medico', { replace: true });
+      } else {
+        alert('Error al guardar la información médica');
+      }
+    } catch (error) {
+      console.error('Error guardando historia clínica:', error);
+      alert('Error al guardar la información médica: ' + (error.message || 'Intente de nuevo'));
     }
   };
 

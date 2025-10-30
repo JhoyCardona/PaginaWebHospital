@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainPage from './pages/mainPage'
-import LoginPage from './pages/loginPage'
+import LoginPage from './pages/loginPage' // <-- corregido: loginPage (case-sensitive)
 import LoginMedicos from './pages/loginMedicos'
 import DashboardMedico from './pages/dashboardMedico'
 import AtencionMedica from './pages/atencionMedica'
@@ -19,26 +19,30 @@ function App() {
           <Routes>
             <Route path="/" element={<MainPage />} />
             <Route path="/login" element={<LoginPage />} />
+
+            {/* Rutas para médicos: ambas URL apuntan al mismo componente */}
             <Route path="/login-medicos" element={<LoginMedicos />} />
+            <Route path="/medicos" element={<LoginMedicos />} />
+
             <Route path="/dashboard-medico" element={<DashboardMedico />} />
             <Route path="/atencion-medica/:citaId" element={<AtencionMedica />} />
             <Route path="/historia-clinica/:pacienteId" element={<HistoriaClinica />} />
-            <Route 
-              path="/perfil-paciente/:pacienteId" 
+            <Route
+              path="/perfil-paciente/:pacienteId"
               element={
                 <ProtectedRoute>
                   <PerfilPaciente />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route path="/setup-users" element={<SetupUsers />} />
-            <Route 
-              path="/agenda-citas" 
+            <Route
+              path="/agenda-citas"
               element={
                 <ProtectedRoute>
                   <AgendaCitas />
                 </ProtectedRoute>
-              } 
+              }
             />
           </Routes>
         </div>

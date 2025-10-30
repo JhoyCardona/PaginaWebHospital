@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import '../styles/loginPage.css'
+import api from '../services/api'
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -36,61 +37,41 @@ const LoginPage = () => {
     }
   }, [navigate])
 
-  const authenticateUser = (tipoId, numId, password) => {
-    // Verificar usuarios registrados en localStorage con tipo de documento, número y contraseña
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    
-    const user = registeredUsers.find(u => 
-      u.tipoId === tipoId && 
-      u.userId === numId && 
-      u.password === password
-    );
-    
-    if (user) {
-      // Normalizar datos para compatibilidad
-      const userData = {
-        id: user.userId,
-        firstName: user.nombre,
-        lastName: user.apellido,
-        email: user.email,
-        phone: user.telefono,
-        tipoId: user.tipoId,
-        fechaNacimiento: user.fechaNacimiento,
-        createdAt: user.fechaRegistro
-      };
-      return { success: true, userData };
+  const authenticateUser = async (tipoId, numId, password) => {
+    try {
+      const resp = await api.login(tipoId, numId.trim(), password);
+      if (resp?.success) {
+        // Attach tipoId to userData for compatibility
+        const userData = { ...resp.userData, tipoId: tipoId };
+        return { success: true, userData };
+      }
+      return { success: false, userData: null };
+    } catch (err) {
+      // Si es un error de bloqueo, incluir info adicional
+      if (err.body && err.body.blocked) {
+        return { success: false, userData: null, blocked: true, remainingSeconds: err.body.remainingSeconds };
+      }
+      return { success: false, userData: null };
     }
-    
-    return { success: false, userData: null };
   }
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault()
-    
     const { tipoId, numId, password } = loginData
-    
-    if (!tipoId || tipoId === 'Seleccione el tipo') {
-      alert('Por favor seleccione un tipo de identificación.')
-      return
-    }
-    
-    if (!numId.trim() || !password) {
-      alert('Por favor complete todos los campos.')
-      return
-    }
-    
-    const authResult = authenticateUser(tipoId, numId.trim(), password);
-    
+    if (!tipoId || tipoId === 'Seleccione el tipo') { alert('Por favor seleccione un tipo de identificación.'); return }
+    if (!numId.trim() || !password) { alert('Por favor complete todos los campos.'); return }
+    const authResult = await authenticateUser(tipoId, numId.trim(), password)
     if (authResult.success) {
-      // Guardar datos del usuario autenticado
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userId', numId.trim());
-      localStorage.setItem('currentUserData', JSON.stringify(authResult.userData));
-      
-      login(numId.trim());
-      navigate('/agenda-citas');
+      localStorage.setItem('isLoggedIn', 'true')
+      localStorage.setItem('userId', numId.trim())
+      localStorage.setItem('currentUserData', JSON.stringify(authResult.userData))
+      login(numId.trim())
+      navigate('/agenda-citas')
+    } else if (authResult.blocked) {
+      const minutes = Math.ceil(authResult.remainingSeconds / 60);
+      alert(`Cuenta bloqueada por múltiples intentos fallidos. Intente nuevamente en ${minutes} minuto(s).`)
     } else {
-      alert('Credenciales incorrectas. Verifique el tipo de documento, número de identificación y contraseña.');
+      alert('Credenciales incorrectas. Verifique el tipo de documento, número de identificación y contraseña.')
     }
   }
 
@@ -110,78 +91,46 @@ const LoginPage = () => {
     }))
   }
 
-  const handleRegisterSubmit = () => {
+  const handleRegisterSubmit = async () => {
     const { tipoId, numId, nombre, apellido, email, telefono, password, confirmPassword, fechaNacimiento, terminosAceptados } = registerData
-
-    // Validaciones
-    if (!tipoId || tipoId === 'Seleccione el tipo') {
-      alert('Por favor seleccione un tipo de identificación.')
-      return
+    if (!tipoId || tipoId === 'Seleccione el tipo') { alert('Por favor seleccione un tipo de identificación.'); return }
+    if (!numId || !nombre || !apellido || !email || !telefono || !password || !fechaNacimiento) { alert('Por favor complete todos los campos obligatorios.'); return }
+    if (password.length < 6) { alert('La contraseña debe tener al menos 6 caracteres.'); return }
+    if (password !== confirmPassword) { alert('Las contraseñas no coinciden.'); return }
+    if (!terminosAceptados) { alert('Debe aceptar los términos y condiciones.'); return }
+    try {
+      const payload = {
+        userId: numId,
+        tipoId,
+        nombre,
+        apellido,
+        email,
+        telefono,
+        password,
+        fechaNacimiento
+      }
+      const res = await api.registerUser(payload)
+      if (res && res.success) {
+        setShowRegisterModal(false)
+        alert('¡Registro exitoso! Ya puede iniciar sesión con sus credenciales.')
+        setRegisterData({
+          tipoId: '',
+          numId: '',
+          nombre: '',
+          apellido: '',
+          email: '',
+          telefono: '',
+          password: '',
+          confirmPassword: '',
+          fechaNacimiento: '',
+          terminosAceptados: false
+        })
+      } else {
+        alert('Error en el registro')
+      }
+    } catch (err) {
+      alert('Error: ' + (err.message || 'No se pudo registrar'))
     }
-
-    if (!numId || !nombre || !apellido || !email || !telefono || !password || !fechaNacimiento) {
-      alert('Por favor complete todos los campos obligatorios.')
-      return
-    }
-
-    if (password.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres.')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      alert('Las contraseñas no coinciden.')
-      return
-    }
-
-    if (!terminosAceptados) {
-      alert('Debe aceptar los términos y condiciones.')
-      return
-    }
-
-    // Verificar si el usuario ya existe
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-    const existingUser = registeredUsers.find(u => u.userId === numId)
-    
-    if (existingUser) {
-      alert('Este número de identificación ya está registrado.')
-      return
-    }
-
-    // Crear nuevo usuario
-    const newUser = {
-      userId: numId,
-      tipoId: tipoId,
-      nombre: nombre,
-      apellido: apellido,
-      email: email,
-      telefono: telefono,
-      password: password,
-      fechaNacimiento: fechaNacimiento,
-      fechaRegistro: new Date().toISOString()
-    }
-
-    // Guardar en localStorage
-    registeredUsers.push(newUser)
-    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers))
-
-    // Cerrar modal y mostrar éxito
-    setShowRegisterModal(false)
-    alert('¡Registro exitoso! Ya puede iniciar sesión con sus credenciales.')
-    
-    // Limpiar formulario
-    setRegisterData({
-      tipoId: '',
-      numId: '',
-      nombre: '',
-      apellido: '',
-      email: '',
-      telefono: '',
-      password: '',
-      confirmPassword: '',
-      fechaNacimiento: '',
-      terminosAceptados: false
-    })
   }
 
   const handlePasswordRecovery = () => {

@@ -7,6 +7,15 @@ export default defineConfig({
   server: {
     port: 5174,
     strictPort: true,
-    host: true
+    host: true,
+    proxy: {
+      // redirige /hospital_api/* a http://localhost/hospital_api/*
+      '/hospital_api': {
+        target: 'http://localhost',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/hospital_api/, '/hospital_api')
+      }
+    }
   }
 })
