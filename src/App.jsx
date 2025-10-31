@@ -4,7 +4,9 @@ import ProtectedRoute from './components/ProtectedRoute'
 import MainPage from './pages/mainPage'
 import LoginPage from './pages/loginPage' // <-- corregido: loginPage (case-sensitive)
 import LoginMedicos from './pages/loginMedicos'
+import LoginAdmin from './pages/loginAdmin'
 import DashboardMedico from './pages/dashboardMedico'
+import DashboardAdmin from './pages/dashboardAdmin'
 import AtencionMedica from './pages/atencionMedica'
 import HistoriaClinica from './pages/historiaClinica'
 import PerfilPaciente from './pages/perfilPaciente'
@@ -23,6 +25,10 @@ function App() {
             {/* Rutas para médicos: ambas URL apuntan al mismo componente */}
             <Route path="/login-medicos" element={<LoginMedicos />} />
             <Route path="/medicos" element={<LoginMedicos />} />
+
+            {/* Rutas para admin */}
+            <Route path="/login-admin" element={<LoginAdmin />} />
+            <Route path="/dashboard-admin" element={<DashboardAdmin />} />
 
             <Route path="/dashboard-medico" element={<DashboardMedico />} />
             <Route path="/atencion-medica/:citaId" element={<AtencionMedica />} />

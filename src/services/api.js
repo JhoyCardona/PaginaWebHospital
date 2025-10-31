@@ -69,6 +69,46 @@ const api = {
     return request(`historias_clinicas.php?${qs}`)
   },
 
+  // Admin
+  loginAdmin: (username, password) => request('login_admin.php', {
+    method: 'POST',
+    body: JSON.stringify({ username, password })
+  }),
+  
+  // Admin - Gestión de usuarios/médicos/citas/sedes
+  getAllUsers: () => request('admin_management.php?entity=users'),
+  getAllMedicos: () => request('admin_management.php?entity=medicos'),
+  getAllAppointments: () => request('admin_management.php?entity=appointments'),
+  getAllSedes: () => request('admin_management.php?entity=sedes'),
+  
+  updateAppointment: (data) => request('admin_management.php?entity=appointment', {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  deleteAppointment: (id) => request('admin_management.php?entity=appointment', {
+    method: 'DELETE',
+    body: JSON.stringify({ id })
+  }),
+  createSede: (data) => request('admin_management.php?entity=sede', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+
+  // Admin - Bloqueos
+  blockUser: (data) => request('admin_blocks.php?action=block', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  unblockUser: (data) => request('admin_blocks.php?action=unblock', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  checkUserBlock: (user_identifier, user_type) => {
+    const qs = new URLSearchParams({ check: 1, user_identifier, user_type }).toString()
+    return request(`admin_blocks.php?${qs}`)
+  },
+  getAllBlocks: () => request('admin_blocks.php'),
+
   // Otros utilitarios (si los necesitas)
   request
 }

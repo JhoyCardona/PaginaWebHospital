@@ -48,11 +48,25 @@ const NavbarComponent = () => {
             </li>
             <li className="nav-item">
               <Link 
-                className="nav-link nav-link-medicos btn" 
+                className="nav-link nav-link-medicos btn me-2" 
                 to="/login-medicos"
               >
                 <i className="fas fa-user-md me-2"></i>
                 Médicos
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link 
+                className="nav-link btn" 
+                to="/login-admin"
+                style={{ 
+                  backgroundColor: '#dc3545', 
+                  color: 'white',
+                  border: '2px solid #dc3545'
+                }}
+              >
+                <i className="fas fa-user-shield me-2"></i>
+                Admin
               </Link>
             </li>
           </ul>
