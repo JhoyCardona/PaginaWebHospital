@@ -1,7 +1,4 @@
-"""
-generador_reporte.py - Genera reportes HTML con gráficos y tablas interactivas
-Cumple con requisitos del profesor: reporte.html con CSS y DataTables.js
-"""
+
 import os
 from datetime import datetime
 from jinja2 import Template
