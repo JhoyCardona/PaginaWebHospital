@@ -94,6 +94,11 @@ function AtencionMedica() {
     }));
   };
 
+  const handleCancelar = () => {
+    // Cancelar y volver al dashboard sin guardar
+    window.location.href = '/dashboard-medico';
+  };
+
   const handleGuardar = async () => {
     try {
       // Preparar datos para la API
@@ -136,19 +141,16 @@ function AtencionMedica() {
         };
         localStorage.setItem(infoMedicaKey, JSON.stringify(infoMedica));
 
-        // Mostrar mensaje de éxito y redirigir automáticamente
-        alert('✅ Información médica guardada exitosamente\n\nSerá redirigido al dashboard...');
-        
-        // Pequeño delay para que el usuario vea el mensaje antes de redirigir
-        setTimeout(() => {
-          navigate('/dashboard-medico', { replace: true });
-        }, 500);
-      } else {
-        alert('❌ Error al guardar la información médica\n\nPor favor, intente nuevamente.');
+        // Actualizar estado de la cita a 'atendida'
+        await api.updateAppointmentStatus(citaId, 'atendida');
+
+        // Redirigir al dashboard inmediatamente
+        window.location.href = '/dashboard-medico';
       }
     } catch (error) {
       console.error('Error guardando historia clínica:', error);
-      alert('Error al guardar la información médica: ' + (error.message || 'Intente de nuevo'));
+      // Incluso si hay error, volver al dashboard
+      window.location.href = '/dashboard-medico';
     }
   };
 
@@ -161,7 +163,7 @@ function AtencionMedica() {
       <div className="header-section">
         <button 
           className="btn btn-secondary back-btn"
-          onClick={() => navigate('/dashboard-medico')}
+          onClick={() => window.location.href = '/dashboard-medico'}
         >
           ← Volver al Dashboard
         </button>
@@ -302,7 +304,8 @@ function AtencionMedica() {
         <div className="actions-section">
           <button 
             className="btn btn-outline-secondary btn-lg me-3"
-            onClick={() => navigate('/dashboard-medico')}
+            onClick={handleCancelar}
+            type="button"
           >
             <i className="bi bi-arrow-left me-2"></i>
             Cancelar
@@ -310,6 +313,7 @@ function AtencionMedica() {
           <button 
             className="btn btn-success btn-lg btn-save-medical"
             onClick={handleGuardar}
+            type="button"
           >
             <i className="bi bi-check-circle me-2"></i>
             Guardar y Volver al Dashboard
