@@ -160,7 +160,7 @@ const Calendar = ({
           <span className="legend-color selected"></span>
           <span>Seleccionado</span>
         </div>
-        <div className="legend-item">
+         <div className="legend-item">
           <span className="legend-color sunday"></span>
           <span>Domingo (cerrado)</span>
         </div>
