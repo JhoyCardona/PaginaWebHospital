@@ -314,7 +314,7 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
                         onClick={() => generateMedicalPDF(appointment.id)}
                       >
                         <i className="fas fa-download me-1"></i>
-                        Descargar PDF
+                        Descargar Historia clínica PDF
                       </button>
                     ) : (
                       <button
