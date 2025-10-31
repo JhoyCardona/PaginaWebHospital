@@ -136,12 +136,15 @@ function AtencionMedica() {
         };
         localStorage.setItem(infoMedicaKey, JSON.stringify(infoMedica));
 
-        alert('Información médica guardada exitosamente');
+        // Mostrar mensaje de éxito y redirigir automáticamente
+        alert('✅ Información médica guardada exitosamente\n\nSerá redirigido al dashboard...');
         
-        // Redirigir al dashboard
-        navigate('/dashboard-medico', { replace: true });
+        // Pequeño delay para que el usuario vea el mensaje antes de redirigir
+        setTimeout(() => {
+          navigate('/dashboard-medico', { replace: true });
+        }, 500);
       } else {
-        alert('Error al guardar la información médica');
+        alert('❌ Error al guardar la información médica\n\nPor favor, intente nuevamente.');
       }
     } catch (error) {
       console.error('Error guardando historia clínica:', error);
@@ -298,10 +301,18 @@ function AtencionMedica() {
         {/* Botones de Acción */}
         <div className="actions-section">
           <button 
-            className="btn btn-success btn-lg"
+            className="btn btn-outline-secondary btn-lg me-3"
+            onClick={() => navigate('/dashboard-medico')}
+          >
+            <i className="bi bi-arrow-left me-2"></i>
+            Cancelar
+          </button>
+          <button 
+            className="btn btn-success btn-lg btn-save-medical"
             onClick={handleGuardar}
           >
-            💾 Guardar Información Médica
+            <i className="bi bi-check-circle me-2"></i>
+            Guardar y Volver al Dashboard
           </button>
         </div>
       </div>

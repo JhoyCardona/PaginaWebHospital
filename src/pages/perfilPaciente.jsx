@@ -91,7 +91,87 @@ const PerfilPaciente = () => {
     setTimeout(() => setAlert({ show: false, message: '', type: '' }), 5000);
   };
 
+  const generarPDFCita = (cita) => {
+    try {
+      // Obtener datos del paciente
+      const nombrePaciente = `${pacienteData.firstName} ${pacienteData.lastName}`;
+      const identificacion = pacienteData.id;
+      const email = pacienteData.email;
+      const telefono = pacienteData.phone;
+      
+      // Crear el contenido del PDF
+      const contenidoPDF = {
+        titulo: 'Comprobante de Cita Médica',
+        paciente: {
+          nombreCompleto: nombrePaciente,
+          identificacion: identificacion,
+          telefono: telefono,
+          email: email
+        },
+        cita: {
+          fecha: new Date(cita.fecha).toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          hora: cita.hora,
+          medico: cita.medicoNombre,
+          especialidad: cita.medicoEspecialidad,
+          estado: cita.estado || 'pendiente',
+          sede: cita.sede || 'Sede Principal'
+        }
+      };
+      
+      // Generar el PDF
+      PDFService.generarPDFCita(contenidoPDF);
+      showAlert('PDF de la cita descargado exitosamente', 'success');
+    } catch (error) {
+      console.error('Error generando PDF de cita:', error);
+      showAlert('Error al generar el PDF de la cita', 'danger');
+    }
+  };
 
+  const handleCancelarCita = async (cita) => {
+    if (!window.confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
+      return;
+    }
+
+    try {
+      // Actualizar el estado de la cita a 'cancelada'
+      const citasActualizadas = citasPaciente.map(c => 
+        c === cita ? { ...c, estado: 'cancelada' } : c
+      );
+      
+      setCitasPaciente(citasActualizadas);
+      
+      // Actualizar en localStorage
+      const todasLasCitas = JSON.parse(localStorage.getItem('citas') || '[]');
+      const citasActualizadasLS = todasLasCitas.map(c => {
+        if (c.paciente === pacienteId && 
+            c.fecha === cita.fecha && 
+            c.hora === cita.hora) {
+          return { ...c, estado: 'cancelada' };
+        }
+        return c;
+      });
+      localStorage.setItem('citas', JSON.stringify(citasActualizadasLS));
+      
+      // Intentar actualizar en la API
+      try {
+        if (cita.id) {
+          await api.cancelAppointment(cita.id);
+        }
+      } catch (apiError) {
+        console.log('No se pudo actualizar en API, solo localStorage');
+      }
+      
+      showAlert('Cita cancelada exitosamente', 'success');
+    } catch (error) {
+      console.error('Error cancelando cita:', error);
+      showAlert('Error al cancelar la cita', 'danger');
+    }
+  };
 
   const generarPDFHistoriaMedica = (historia) => {
     // === OBTENER DATOS DEL PACIENTE ===
@@ -370,23 +450,61 @@ const PerfilPaciente = () => {
 
       <Row className="mb-4">
         <Col>
-          <Card className="perfil-header-card">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <h2 className="perfil-title">
-                    Mi Perfil - {pacienteData.firstName} {pacienteData.lastName}
-                  </h2>
-                  <p className="perfil-subtitle">Información Personal y Médica</p>
-                </div>
-                <Button 
-                  variant="outline-danger" 
-                  onClick={handleLogout}
-                  className="logout-btn"
-                >
-                  Cerrar Sesión
-                </Button>
-              </div>
+          <Card className="perfil-header-card shadow-lg border-0">
+            <Card.Body className="p-4">
+              <Row className="align-items-center">
+                <Col md={8}>
+                  <div className="d-flex align-items-center mb-3">
+                    <div className="patient-avatar-container me-3">
+                      <div className="patient-avatar">
+                        <i className="bi bi-person-circle" style={{fontSize: '3.5rem', color: '#0d6efd'}}></i>
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="perfil-title mb-2">
+                        {pacienteData.firstName} {pacienteData.lastName}
+                      </h2>
+                      <div className="d-flex gap-2 flex-wrap">
+                        <Badge bg="primary" className="px-3 py-2">
+                          <i className="bi bi-card-text me-1"></i>
+                          {pacienteData.tipoId || 'CC'}: {pacienteData.id}
+                        </Badge>
+                        <Badge bg="success" className="px-3 py-2">
+                          <i className="bi bi-shield-check me-1"></i>
+                          Paciente Activo
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <Row className="g-3 mt-2">
+                    <Col md={6}>
+                      <div className="info-pill">
+                        <i className="bi bi-envelope-fill text-primary me-2"></i>
+                        <span className="text-muted small">Email:</span>
+                        <strong className="ms-2">{pacienteData.email}</strong>
+                      </div>
+                    </Col>
+                    <Col md={6}>
+                      <div className="info-pill">
+                        <i className="bi bi-telephone-fill text-success me-2"></i>
+                        <span className="text-muted small">Teléfono:</span>
+                        <strong className="ms-2">{pacienteData.phone}</strong>
+                      </div>
+                    </Col>
+                  </Row>
+                </Col>
+                <Col md={4} className="text-end">
+                  <Button 
+                    variant="outline-danger" 
+                    size="lg"
+                    onClick={handleLogout}
+                    className="logout-btn px-4"
+                  >
+                    <i className="bi bi-box-arrow-right me-2"></i>
+                    Cerrar Sesión
+                  </Button>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
         </Col>
@@ -433,50 +551,126 @@ const PerfilPaciente = () => {
           </Card>
         </Tab>
 
-        <Tab eventKey="citas" title="Mis Citas">
-          <Card className="citas-card">
-            <Card.Header className="citas-header">
-              <h4>📅 Historial de Citas Médicas</h4>
+        <Tab eventKey="citas" title="📅 Citas Programadas">
+          <Card className="citas-card shadow-sm border-0">
+            <Card.Header className="citas-header bg-gradient text-white" style={{background: 'linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)'}}>
+              <div className="d-flex align-items-center">
+                <i className="bi bi-calendar-check-fill me-2" style={{fontSize: '1.5rem'}}></i>
+                <h4 className="mb-0">Mis Citas Médicas</h4>
+              </div>
             </Card.Header>
-            <Card.Body>
+            <Card.Body className="p-4">
               {citasPaciente.length === 0 ? (
-                <Alert variant="info">
-                  <i className="bi bi-info-circle"></i>
-                  No tienes citas programadas en este momento.
+                <Alert variant="info" className="text-center py-4 border-0" style={{background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)'}}>
+                  <i className="bi bi-info-circle" style={{fontSize: '2rem'}}></i>
+                  <p className="mt-3 mb-0 fw-bold">No tienes citas programadas en este momento.</p>
+                  <p className="text-muted small">Agenda tu próxima cita desde la página principal.</p>
                 </Alert>
               ) : (
-                <div className="table-responsive">
-                  <Table striped bordered hover className="citas-table">
-                    <thead>
-                      <tr>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Médico</th>
-                        <th>Especialidad</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {citasPaciente.map((cita, index) => (
-                        <tr key={index}>
-                          <td className="cita-fecha">{new Date(cita.fecha).toLocaleDateString()}</td>
-                          <td>
-                            <Badge bg="primary" className="cita-hora">
-                              {cita.hora}
-                            </Badge>
-                          </td>
-                          <td className="medico-nombre">{cita.medicoNombre}</td>
-                          <td className="cita-especialidad">{cita.medicoEspecialidad}</td>
-                          <td>
-                            <Badge bg={cita.estado === 'confirmada' ? 'success' : 'warning'}>
-                              {cita.estado || 'pendiente'}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
+                <Row className="g-4">
+                  {citasPaciente.map((cita, index) => {
+                    const fechaCita = new Date(cita.fecha);
+                    const hoy = new Date();
+                    hoy.setHours(0, 0, 0, 0);
+                    fechaCita.setHours(0, 0, 0, 0);
+                    
+                    const esFutura = fechaCita >= hoy;
+                    const estadoColor = cita.estado === 'confirmada' ? 'success' : 
+                                       cita.estado === 'cancelada' ? 'danger' : 
+                                       cita.estado === 'completada' ? 'secondary' : 'warning';
+                    
+                    return (
+                      <Col md={6} lg={4} key={index}>
+                        <Card className="cita-card-item h-100 border-0 shadow-sm">
+                          <Card.Body className="p-4">
+                            <div className="d-flex justify-content-between align-items-start mb-3">
+                              <Badge 
+                                bg={estadoColor} 
+                                className="px-3 py-2"
+                                style={{fontSize: '0.85rem', borderRadius: '8px'}}
+                              >
+                                <i className={`bi bi-${
+                                  cita.estado === 'confirmada' ? 'check-circle' : 
+                                  cita.estado === 'cancelada' ? 'x-circle' :
+                                  cita.estado === 'completada' ? 'check-all' : 'clock'
+                                } me-1`}></i>
+                                {(cita.estado || 'pendiente').toUpperCase()}
+                              </Badge>
+                              {esFutura && cita.estado !== 'cancelada' && (
+                                <Badge bg="info" className="px-2 py-1">
+                                  <i className="bi bi-arrow-right-circle me-1"></i>
+                                  Próxima
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <div className="cita-info mb-3">
+                              <div className="d-flex align-items-center mb-2">
+                                <i className="bi bi-calendar3 text-primary me-2" style={{fontSize: '1.2rem'}}></i>
+                                <div>
+                                  <small className="text-muted d-block">Fecha</small>
+                                  <strong>{new Date(cita.fecha).toLocaleDateString('es-ES', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}</strong>
+                                </div>
+                              </div>
+                              
+                              <div className="d-flex align-items-center mb-2">
+                                <i className="bi bi-clock-fill text-success me-2" style={{fontSize: '1.2rem'}}></i>
+                                <div>
+                                  <small className="text-muted d-block">Hora</small>
+                                  <strong>{cita.hora}</strong>
+                                </div>
+                              </div>
+                              
+                              <div className="d-flex align-items-center mb-2">
+                                <i className="bi bi-person-badge text-info me-2" style={{fontSize: '1.2rem'}}></i>
+                                <div>
+                                  <small className="text-muted d-block">Médico</small>
+                                  <strong>{cita.medicoNombre}</strong>
+                                </div>
+                              </div>
+                              
+                              <div className="d-flex align-items-center">
+                                <i className="bi bi-hospital text-warning me-2" style={{fontSize: '1.2rem'}}></i>
+                                <div>
+                                  <small className="text-muted d-block">Especialidad</small>
+                                  <strong>{cita.medicoEspecialidad}</strong>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="d-flex gap-2 mt-3 pt-3 border-top">
+                              <Button 
+                                variant="outline-primary" 
+                                size="sm" 
+                                className="flex-fill"
+                                onClick={() => generarPDFCita(cita)}
+                              >
+                                <i className="bi bi-file-earmark-pdf me-1"></i>
+                                Descargar PDF
+                              </Button>
+                              {esFutura && cita.estado !== 'cancelada' && (
+                                <Button 
+                                  variant="outline-danger" 
+                                  size="sm" 
+                                  className="flex-fill"
+                                  onClick={() => handleCancelarCita(cita)}
+                                >
+                                  <i className="bi bi-x-circle me-1"></i>
+                                  Cancelar
+                                </Button>
+                              )}
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    );
+                  })}
+                </Row>
               )}
             </Card.Body>
           </Card>

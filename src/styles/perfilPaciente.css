@@ -8,35 +8,98 @@
   padding: 20px 0;
 }
 
-/* Header Card */
-.header-card {
+/* Header Card Mejorado */
+.perfil-header-card {
   border: none;
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-left: 5px solid #0d6efd;
+  transition: all 0.3s ease;
 }
 
-.paciente-avatar {
-  width: 70px;
-  height: 70px;
-  background: linear-gradient(135deg, #007bff, #0056b3);
+.perfil-header-card:hover {
+  box-shadow: 0 8px 24px rgba(13, 110, 253, 0.15) !important;
+  transform: translateY(-2px);
+}
+
+.patient-avatar-container {
+  position: relative;
+}
+
+.patient-avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+  position: relative;
 }
 
-.paciente-name {
-  color: #2c3e50;
-  font-weight: 600;
-  margin-bottom: 0;
+.patient-avatar::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  border: 2px solid #0d6efd;
+  opacity: 0.3;
 }
 
-.paciente-info {
-  color: #6c757d;
+.perfil-title {
+  color: #212529;
+  font-weight: 700;
+  font-size: 1.8rem;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.info-pill {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 3px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.info-pill:hover {
+  background: #e9ecef;
+  border-left-color: #0d6efd;
+  transform: translateX(5px);
+}
+
+.info-pill strong {
   font-size: 0.95rem;
-  margin-bottom: 0;
+  color: #212529;
+}
+
+.info-pill .text-muted {
+  font-size: 0.85rem;
+}
+
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+}
+
+.logout-btn {
+  border-width: 2px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 /* Main Profile Card */
@@ -170,6 +233,81 @@
 .btn-outline-primary.btn-sm {
   padding: 5px 15px;
   font-size: 0.85rem;
+}
+
+/* Tarjetas de Citas Mejoradas */
+.cita-card-item {
+  border-radius: 16px !important;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef !important;
+  background: white;
+}
+
+.cita-card-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+  border-color: #0d6efd !important;
+}
+
+.cita-card-item .card-body {
+  position: relative;
+}
+
+.cita-info {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 15px;
+}
+
+.cita-info > div {
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.cita-info > div:last-child {
+  border-bottom: none;
+}
+
+.cita-info small {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.cita-info strong {
+  display: block;
+  margin-top: 2px;
+  color: #212529;
+  font-size: 0.95rem;
+}
+
+.citas-header {
+  border-radius: 16px 16px 0 0 !important;
+  border: none !important;
+}
+
+.citas-card {
+  border-radius: 16px !important;
+}
+
+.btn-outline-primary.btn-sm,
+.btn-outline-danger.btn-sm {
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+  border-width: 2px;
+}
+
+.btn-outline-primary.btn-sm:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+.btn-outline-danger.btn-sm:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
 
 /* Alertas flotantes */

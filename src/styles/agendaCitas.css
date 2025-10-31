@@ -1,3 +1,4 @@
+/* Estilos Agenda Citas - Updated v2.0 */
 @import url('./mainPage.css'); 
 
 body {
@@ -24,25 +25,163 @@ body {
 }
 
 .info-card {
-    border-color: var(--color-primary-blue);
+    border-left: 5px solid #0d6efd !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
 }
 
 .info-header {
-    background-color: var(--color-primary-blue) !important;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;
     font-weight: bold;
     font-size: 1.1rem;
-    padding: 1rem;
+    padding: 1.2rem !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.info-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.info-box:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+    transform: translateY(-2px);
+}
+
+.info-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #0d6efd;
+    flex-shrink: 0;
+}
+
+.info-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.info-content small {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.info-content strong {
+    font-size: 1rem;
+    color: #212529;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .cita-card {
-    border-color: var(--color-highlight-blue);
+    border-left: 5px solid #17a2b8 !important;
 }
 
 .cita-header {
-    background-color: var(--color-highlight-blue) !important;
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
     font-weight: bold;
     font-size: 1.1rem;
-    padding: 1rem;
+    padding: 1.2rem !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.time-card {
+    border-left: 5px solid #ffc107 !important;
+}
+
+.time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.time-slot-btn {
+    padding: 15px 20px;
+    border: 2px solid #e9ecef;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.time-slot-btn:hover {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.time-slot-btn.selected {
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    border-color: #ffc107;
+    color: white;
+    box-shadow: 0 6px 16px rgba(255, 193, 7, 0.4);
+    transform: scale(1.05);
+}
+
+.medico-card {
+    padding: 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 16px;
+    background: white;
+    transition: all 0.3s ease;
+    text-align: center;
+    height: 100%;
+}
+
+.medico-card:hover {
+    border-color: #198754;
+    box-shadow: 0 6px 20px rgba(25, 135, 84, 0.2);
+    transform: translateY(-5px);
+}
+
+.medico-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #d1f4e0 0%, #a5e3bf 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 2rem;
+    color: #198754;
+}
+
+.medico-name {
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.medico-especialidad {
+    color: #6c757d;
+    margin-bottom: 15px;
+    font-weight: 500;
 }
 
 .afiliado-info {
@@ -55,35 +194,93 @@ body {
 }
 
 .calendar-container {
-    background-color: white;
-    border: 1px solid var(--color-highlight-blue) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e9ecef !important;
     max-width: 100%;
     overflow: hidden;
     margin: 0 10px; 
-    border-radius: 8px; 
+    border-radius: 20px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.calendar-container:hover {
+    box-shadow: 0 6px 25px rgba(13, 110, 253, 0.15);
 }
 
 .month-year-label {
-    color: var(--color-primary-blue);
-    font-size: 1.2rem;
-    margin: 10px 0; 
+    color: white !important;
+    font-size: 1.3rem;
+    margin: 0 !important;
+    padding: 0;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex: 1;
+}
+
+.month-year-selectors {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+}
+
+.calendar-select {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 8px 15px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0d6efd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.calendar-select:hover {
+    background: white;
+    border-color: white;
+    transform: scale(1.05);
+}
+
+.calendar-select:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+}
+
+.month-select {
+    min-width: 120px;
+}
+
+.year-select {
+    min-width: 80px;
 }
 
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
+    gap: 8px;
     text-align: center;
-    padding: 15px; 
+    padding: 20px; 
     max-width: 100%;
     box-sizing: border-box;
+    background: white;
 }
 
 .day-name {
-    font-weight: bold;
-    color: #6c757d;
-    padding: 8px 4px;
-    font-size: 0.9rem;
+    font-weight: 700;
+    color: #495057;
+    padding: 10px 4px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    margin-bottom: 5px;
 }
 
 .day-number {
@@ -91,47 +288,185 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 40px;
-    max-width: 40px;
+    height: 45px;
+    max-width: 45px;
     margin: 0 auto;
-    border-radius: 50%;
+    border-radius: 12px;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
-    font-weight: 500;
-    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 600;
+    font-size: 0.95rem;
     box-sizing: border-box;
+    position: relative;
+    border: 2px solid transparent;
+}
+
+.day-number::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
 }
 
 .day-number.inactive {
-    color: #ced4da; 
+    color: #dee2e6; 
     cursor: default;
     background-color: #f8f9fa;
+    border-color: #f8f9fa;
 }
 
 .day-number.sunday-disabled {
-    color: #dc3545;
-    background-color: #f8d7da;
+    color: #dc3545 !important;
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
     cursor: not-allowed;
-    text-decoration: line-through;
+    position: relative;
+    border-color: #dc3545;
+}
+
+.day-number.sunday-disabled::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #dc3545;
+    transform: rotate(-15deg);
 }
 
 .day-number.available {
-    background-color: #e6f3ff; 
-    color: #333;
+    background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%);
+    color: #0d6efd;
+    border-color: #b6d4fe;
+    font-weight: 600;
 }
 
 .day-number.available:hover {
-    background-color: var(--color-highlight-blue);
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
     color: white;
-    transform: scale(1.1);
+    transform: scale(1.15) translateY(-2px);
+    box-shadow: 0 6px 16px rgba(13, 110, 253, 0.4);
+    border-color: #0d6efd;
 }
 
 .day-number.selected {
-    background-color: var(--color-primary-blue);
+    background: linear-gradient(135deg, #198754 0%, #157347 100%) !important;
+    color: white !important;
+    font-weight: 700;
+    border: 3px solid #ffc107 !important;
+    transform: scale(1.15);
+    box-shadow: 0 8px 20px rgba(25, 135, 84, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 8px 20px rgba(25, 135, 84, 0.4);
+    }
+    50% {
+        box-shadow: 0 8px 30px rgba(25, 135, 84, 0.6);
+    }
+}
+
+/* Header del mes con botones de navegación */
+.month-year-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    margin: 0;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    border-radius: 18px 18px 0 0;
+}
+
+.btn-month-nav {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     color: white;
-    font-weight: bold;
-    border: 2px solid var(--color-accent-yellow);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    backdrop-filter: blur(10px);
+}
+
+.btn-month-nav:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
     transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-month-nav:active {
+    transform: scale(0.95);
+}
+
+/* Leyenda del calendario */
+.calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 0 0 18px 18px;
+    margin-top: 10px;
+    border-top: 2px solid #e9ecef;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+.legend-color {
+    width: 25px;
+    height: 25px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    display: inline-block;
+}
+
+.legend-color.available {
+    background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%);
+    border-color: #b6d4fe;
+}
+
+.legend-color.selected {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+    border: 3px solid #ffc107;
+}
+
+.legend-color.sunday {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
+    border-color: #dc3545;
+    position: relative;
+}
+
+.legend-color.sunday::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #dc3545;
+    transform: rotate(-15deg);
 }
 
 .time-header {

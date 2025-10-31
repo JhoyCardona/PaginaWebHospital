@@ -41,8 +41,54 @@ const LoginPage = () => {
     try {
       const resp = await api.login(tipoId, numId.trim(), password);
       if (resp?.success) {
-        // Attach tipoId to userData for compatibility
-        const userData = { ...resp.userData, tipoId: tipoId };
+        // Intentar obtener datos completos del usuario desde la API
+        let userData = resp.userData || {};
+        
+        try {
+          const userDetails = await api.getUserByIdentificacion(numId.trim());
+          if (userDetails && Array.isArray(userDetails) && userDetails.length > 0) {
+            // Buscar el usuario específico en el array
+            const user = userDetails.find(u => 
+              u.user_id === numId.trim() || 
+              u.identificacion === numId.trim() ||
+              u.id === numId.trim()
+            ) || userDetails[0];
+            
+            userData = {
+              id: user.user_id || user.identificacion || numId.trim(),
+              firstName: user.nombre || 'No disponible',
+              lastName: user.apellido || 'No disponible',
+              email: user.email || 'No disponible',
+              phone: user.telefono || 'No disponible',
+              tipoId: user.tipo_id || tipoId || 'CC',
+              fechaNacimiento: user.fecha_nacimiento,
+              genero: user.genero,
+              createdAt: user.fecha_registro
+            };
+          } else {
+            // Si no hay datos de la API, usar los del login response
+            userData = { 
+              ...userData, 
+              id: numId.trim(),
+              tipoId: tipoId,
+              firstName: userData.nombre || userData.firstName || 'No disponible',
+              lastName: userData.apellido || userData.lastName || 'No disponible',
+              email: userData.email || 'No disponible'
+            };
+          }
+        } catch (userErr) {
+          console.warn('No se pudieron obtener datos adicionales del usuario:', userErr);
+          // Usar datos básicos del login
+          userData = { 
+            ...userData, 
+            id: numId.trim(),
+            tipoId: tipoId,
+            firstName: userData.nombre || userData.firstName || 'No disponible',
+            lastName: userData.apellido || userData.lastName || 'No disponible',
+            email: userData.email || 'No disponible'
+          };
+        }
+        
         return { success: true, userData };
       }
       return { success: false, userData: null };
@@ -65,7 +111,7 @@ const LoginPage = () => {
       localStorage.setItem('isLoggedIn', 'true')
       localStorage.setItem('userId', numId.trim())
       localStorage.setItem('currentUserData', JSON.stringify(authResult.userData))
-      login(numId.trim())
+      login(numId.trim(), authResult.userData)
       navigate('/agenda-citas')
     } else if (authResult.blocked) {
       const minutes = Math.ceil(authResult.remainingSeconds / 60);

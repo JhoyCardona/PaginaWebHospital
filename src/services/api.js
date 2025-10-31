@@ -35,6 +35,18 @@ const api = {
   // Appointments / Slots
   createAppointment: (data) => request('appointments.php', { method: 'POST', body: JSON.stringify(data) }),
   deleteAppointment: (id) => request('appointments.php', { method: 'DELETE', body: JSON.stringify({ id }) }),
+  updateAppointmentStatus: (id, status) => request('appointments.php', { 
+    method: 'PUT', 
+    body: JSON.stringify({ id, status }) 
+  }),
+  updateAppointmentDateTime: (id, fecha, hora) => request('appointments.php', { 
+    method: 'PUT', 
+    body: JSON.stringify({ id, fecha, hora }) 
+  }),
+  getPatientAppointments: (paciente_user_id) => {
+    const qs = new URLSearchParams({ paciente_user_id }).toString()
+    return request(`appointments.php?${qs}`)
+  },
   createSlot: (data) => request('slots.php', { method: 'POST', body: JSON.stringify(data) }),
   getMedicoAppointments: (medico_identificacion) => {
     const qs = new URLSearchParams({ medico_identificacion }).toString()
@@ -48,6 +60,10 @@ const api = {
     method: 'POST', 
     body: JSON.stringify({ tipo_documento, identificacion, password }) 
   }),
+  getUserByIdentificacion: (identificacion) => {
+    const qs = new URLSearchParams({ identificacion }).toString()
+    return request(`users.php?${qs}`)
+  },
 
   // Médicos / Auth
   loginMedico: (identificacion, password) => request('login_medico.php', {

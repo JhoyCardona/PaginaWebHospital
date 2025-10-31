@@ -6,12 +6,17 @@ const Calendar = ({
   selectedDate, 
   onDateSelect, 
   onPrevMonth, 
-  onNextMonth 
+  onNextMonth,
+  onMonthChange,
+  onYearChange
 }) => {
   const months = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ]
+  
+  const currentYearNum = new Date().getFullYear()
+  const years = Array.from({ length: 5 }, (_, i) => currentYearNum + i)
 
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
@@ -86,16 +91,56 @@ const Calendar = ({
   }
 
   return (
-    <div className="calendar-container border p-3 rounded shadow-sm">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <button className="btn btn-outline-primary btn-sm" onClick={onPrevMonth}>
-          ‹
+    <div className="calendar-container">
+      <div className="month-year-header">
+        <button 
+          type="button"
+          className="btn-month-nav btn-prev" 
+          onClick={onPrevMonth}
+          title="Mes anterior"
+        >
+          <i className="bi bi-chevron-left"></i>
         </button>
-        <h5 className="month-year-label mb-0">
-          {months[currentMonth]} {currentYear}
-        </h5>
-        <button className="btn btn-outline-primary btn-sm" onClick={onNextMonth}>
-          ›
+        
+        <div className="month-year-selectors">
+          {onMonthChange && (
+            <select 
+              className="calendar-select month-select"
+              value={currentMonth}
+              onChange={(e) => onMonthChange(parseInt(e.target.value))}
+            >
+              {months.map((month, index) => (
+                <option key={index} value={index}>{month}</option>
+              ))}
+            </select>
+          )}
+          
+          {onYearChange && (
+            <select 
+              className="calendar-select year-select"
+              value={currentYear}
+              onChange={(e) => onYearChange(parseInt(e.target.value))}
+            >
+              {years.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          )}
+          
+          {!onMonthChange && !onYearChange && (
+            <h5 className="month-year-label">
+              {months[currentMonth]} {currentYear}
+            </h5>
+          )}
+        </div>
+        
+        <button 
+          type="button"
+          className="btn-month-nav btn-next" 
+          onClick={onNextMonth}
+          title="Mes siguiente"
+        >
+          <i className="bi bi-chevron-right"></i>
         </button>
       </div>
       
@@ -104,6 +149,21 @@ const Calendar = ({
           <div key={day} className="day-name">{day}</div>
         ))}
         {generateCalendarDays()}
+      </div>
+      
+      <div className="calendar-legend">
+        <div className="legend-item">
+          <span className="legend-color available"></span>
+          <span>Disponible</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color selected"></span>
+          <span>Seleccionado</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color sunday"></span>
+          <span>Domingo (cerrado)</span>
+        </div>
       </div>
     </div>
   )
