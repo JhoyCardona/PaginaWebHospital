@@ -214,7 +214,25 @@ sudo systemctl stop apache2
 
 ---
 
-## 🎯 Resumen Rápido
+## 🎯 Resumen Rápido (MÉTODO FÁCIL - RECOMENDADO)
+
+```bash
+# ⚡ INICIAR TODO CON UN SOLO COMANDO:
+./start-all.sh
+
+# 🛑 DETENER TODO:
+./stop-all.sh
+
+# 🔄 REINICIAR TODO:
+./restart-all.sh
+
+# 📊 VER ESTADO DE LOS SERVICIOS:
+./status.sh
+```
+
+---
+
+## 🎯 Método Manual (Antiguo)
 
 ```bash
 # Terminal 1: Backend
@@ -225,6 +243,54 @@ cd /home/jhoyners-cardona/proyects/Hospital
 npm run dev
 
 # Abrir navegador en: http://localhost:5174
+```
+
+---
+
+## 📜 Descripción de los Scripts Automáticos
+
+### `start-all.sh` - Iniciar Todo el Sistema
+Inicia automáticamente:
+- ✅ XAMPP (Apache + MySQL)
+- ✅ API Python de estadísticas (puerto 8000)
+- ✅ Frontend React (puerto 5174)
+- ✅ Verifica que todo esté funcionando correctamente
+
+**Uso:**
+```bash
+./start-all.sh
+```
+
+### `stop-all.sh` - Detener Todo el Sistema
+Detiene todos los servicios del proyecto:
+- Cierra el frontend
+- Cierra la API Python
+- Detiene XAMPP
+
+**Uso:**
+```bash
+./stop-all.sh
+```
+
+### `restart-all.sh` - Reiniciar Todo
+Detiene y vuelve a iniciar todos los servicios.
+
+**Uso:**
+```bash
+./restart-all.sh
+```
+
+### `status.sh` - Ver Estado del Sistema
+Muestra el estado de todos los servicios:
+- ✅/❌ Apache (puerto 80)
+- ✅/❌ MySQL (puerto 3306)
+- ✅/❌ API Python (puerto 8000)
+- ✅/❌ Frontend (puerto 5174)
+- Verifica que las URLs respondan correctamente
+
+**Uso:**
+```bash
+./status.sh
 ```
 
 ¡Listo! Tu sistema hospitalario está corriendo. 🏥✨
