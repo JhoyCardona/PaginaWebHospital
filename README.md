@@ -17,7 +17,7 @@ Sistema web completo para la gestión hospitalaria que incluye:
 - **🎨 Interfaz moderna**: Diseño responsivo con Bootstrap
 - **🩺 Gestión de CUPS**: Códigos únicos de procedimientos en salud
 - **💊 Prescripciones**: Tabla interactiva de medicamentos
-- **🚫 Incapacidades**: Gestión de licencias médicas
+- **🚫 Incapacidades**: Gestión de licencias médicas.
 
 ## 📁 Estructura del Proyecto
 
