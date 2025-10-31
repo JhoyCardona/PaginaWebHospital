@@ -751,20 +751,21 @@ const AgendaCitas = () => {
                           {puedeModificar && (
                             <div className="d-flex gap-2">
                               <button 
-                                className="btn btn-outline-warning btn-sm"
+                                className="btn btn-outline-warning btn-sm d-flex align-items-center gap-1"
                                 onClick={() => handleIniciarReprogramacion(cita)}
                                 title="Reprogramar cita"
-                                style={{width: '40px', height: '40px', borderRadius: '8px'}}
+                                style={{padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600'}}
                               >
-                                <i className="bi bi-calendar-event" style={{fontSize: '1.1rem'}}></i>
+                                <i className="bi bi-calendar-event"></i>
+                                Editar
                               </button>
                               <button 
-                                className="btn btn-outline-danger btn-sm"
+                                className="btn btn-outline-danger btn-sm d-flex align-items-center gap-1"
                                 onClick={() => handleCancelarCita(cita)}
                                 title="Cancelar cita"
-                                style={{width: '40px', height: '40px', borderRadius: '8px'}}
+                                style={{padding: '8px 12px', borderRadius: '8px', fontSize: '1rem', fontWeight: '600'}}
                               >
-                                <i className="bi bi-x-circle" style={{fontSize: '1.1rem'}}></i>
+                                ❌
                               </button>
                             </div>
                           )}
