@@ -150,7 +150,6 @@ const Calendar = ({
         ))}
         {generateCalendarDays()}
       </div>
-      
       <div className="calendar-legend">
         <div className="legend-item">
           <span className="legend-color available"></span>
@@ -160,7 +159,7 @@ const Calendar = ({
           <span className="legend-color selected"></span>
           <span>Seleccionado</span>
         </div>
-        <div className="legend-item">
+         <div className="legend-item">
           <span className="legend-color sunday"></span>
           <span>Domingo (cerrado)</span>
         </div>

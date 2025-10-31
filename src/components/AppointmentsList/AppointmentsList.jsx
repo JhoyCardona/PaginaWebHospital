@@ -250,92 +250,88 @@ const AppointmentsList = ({ userId, onCancelAppointment }) => {
 
   if (appointments.length === 0) {
     return (
-      <div className="no-appointments text-center py-5">
-        <i className="fas fa-calendar-times fa-4x mb-3 text-muted"></i>
-        <h4 className="text-muted">No tienes citas programadas</h4>
-        <p className="text-muted">
-          Ve a la pestaña "Información de citas" para agendar una nueva cita médica.
+      <div className="no-appointments d-flex flex-column align-items-center justify-content-center py-5">
+        <i className="fas fa-calendar-times fa-4x mb-3 text-secondary opacity-50"></i>
+        <h4 className="text-secondary fw-light">No tienes citas programadas</h4>
+        <p className="text-muted mb-0">
+          Ve a la pestaña <span className="fw-semibold">"Información de citas"</span> para agendar una nueva cita médica.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="appointments-list">
-      <h4 className="mb-4">
-        <i className="fas fa-calendar-check me-2"></i>
-        Mis Citas Programadas ({appointments.length})
+    <div className="appointments-list container px-0 px-md-2">
+      <h4 className="mb-4 fw-bold text-primary d-flex align-items-center gap-2">
+        <i className="fas fa-calendar-check"></i>
+        Mis Citas Programadas <span className="badge bg-primary-subtle text-primary-emphasis ms-2">{appointments.length}</span>
       </h4>
-      
-      {appointments.map((appointment) => {
-        const isAttended = isAppointmentAttended(appointment.id)
-        
-        return (
-        <div key={appointment.id} className="appointment-card">
-          <div className="appointment-header">
-            <div>
-              <h5 className="mb-0">
-                <i className="fas fa-user-md me-2"></i>
-                {getProfessionalName(appointment.medico)}
-              </h5>
-              <small className="opacity-75">
-                Cita ID: {appointment.id}
-              </small>
+      <div className="row g-4">
+        {appointments.map((appointment) => {
+          const isAttended = isAppointmentAttended(appointment.id)
+          return (
+            <div key={appointment.id} className="col-12 col-md-6 col-lg-4">
+              <div className="card shadow-sm h-100 border-0 appointment-card position-relative">
+                <div className="card-header bg-white border-0 d-flex justify-content-between align-items-center pb-2">
+                  <div>
+                    <h5 className="mb-0 fw-semibold text-dark">
+                      <i className="fas fa-user-md me-2 text-primary"></i>
+                      {getProfessionalName(appointment.medico)}
+                    </h5>
+                    <small className="text-muted">Cita ID: {appointment.id}</small>
+                  </div>
+                  <span className={`badge rounded-pill ${isAttended ? 'bg-success' : 'bg-warning text-dark'} ms-2 fs-6`}>
+                    {isAttended ? 'Atendida' : 'Programada'}
+                  </span>
+                </div>
+                <div className="card-body pt-2 pb-3">
+                  <ul className="list-unstyled mb-3">
+                    <li className="mb-1 d-flex align-items-center gap-2">
+                      <i className="fas fa-calendar-alt text-primary"></i>
+                      <span><strong>Fecha:</strong> {formatDate(appointment.fecha)}</span>
+                    </li>
+                    <li className="mb-1 d-flex align-items-center gap-2">
+                      <i className="fas fa-clock text-primary"></i>
+                      <span><strong>Hora:</strong> {appointment.hora}</span>
+                    </li>
+                    <li className="mb-1 d-flex align-items-center gap-2">
+                      <i className="fas fa-map-marker-alt text-primary"></i>
+                      <span><strong>Lugar:</strong> {getPlaceName(appointment.lugar)}</span>
+                    </li>
+                    <li className="mb-1 d-flex align-items-center gap-2">
+                      <i className="fas fa-stethoscope text-primary"></i>
+                      <span><strong>Tipo:</strong> CONSULTA MEDICINA GENERAL SALUD (CITA PRESENCIAL)</span>
+                    </li>
+                    <li className="mb-1 d-flex align-items-center gap-2">
+                      <i className="fas fa-info-circle text-primary"></i>
+                      <span><strong>Estado:</strong> {isAttended ? 'Atendida' : 'Confirmada'}</span>
+                    </li>
+                  </ul>
+                  <div className="d-flex justify-content-end mt-2">
+                    {isAttended ? (
+                      <button
+                        className="btn btn-outline-success px-3 shadow-sm"
+                        onClick={() => generateMedicalPDF(appointment.id)}
+                      >
+                        <i className="fas fa-download me-1"></i>
+                        Descargar Historia clínica PDF
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-outline-danger px-3 shadow-sm"
+                        onClick={() => handleCancelAppointment(appointment.id)}
+                      >
+                        <i className="fas fa-times me-1"></i>
+                        Cancelar Cita
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <span className={`appointment-status ${isAttended ? 'status-atendida' : 'status-programada'}`}>
-              {isAttended ? 'Atendida' : 'Programada'}
-            </span>
-          </div>
-          
-          <div className="appointment-body">
-            <div className="appointment-info">
-              <i className="fas fa-calendar-alt"></i>
-              <span><strong>Fecha:</strong> {formatDate(appointment.fecha)}</span>
-            </div>
-            
-            <div className="appointment-info">
-              <i className="fas fa-clock"></i>
-              <span><strong>Hora:</strong> {appointment.hora}</span>
-            </div>
-            
-            <div className="appointment-info">
-              <i className="fas fa-map-marker-alt"></i>
-              <span><strong>Lugar:</strong> {getPlaceName(appointment.lugar)}</span>
-            </div>
-            
-            <div className="appointment-info">
-              <i className="fas fa-stethoscope"></i>
-              <span><strong>Tipo:</strong> CONSULTA MEDICINA GENERAL SALUD (CITA PRESENCIAL)</span>
-            </div>
-            
-            <div className="appointment-info">
-              <i className="fas fa-info-circle"></i>
-              <span><strong>Estado:</strong> {isAttended ? 'Atendida' : 'Confirmada'}</span>
-            </div>
-            
-            <div className="mt-3 text-end">
-              {isAttended ? (
-                <button
-                  className="btn btn-success"
-                  onClick={() => generateMedicalPDF(appointment.id)}
-                >
-                  <i className="fas fa-download me-1"></i>
-                  Descargar PDF
-                </button>
-              ) : (
-                <button
-                  className="btn cancel-appointment-btn"
-                  onClick={() => handleCancelAppointment(appointment.id)}
-                >
-                  <i className="fas fa-times me-1"></i>
-                  Cancelar Cita
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -66,7 +66,7 @@ const NavbarComponent = () => {
                 }}
               >
                 <i className="fas fa-user-shield me-2"></i>
-                Admin
+                Administrador
               </Link>
             </li>
           </ul>

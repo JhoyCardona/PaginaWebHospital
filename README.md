@@ -1,389 +1,116 @@
-# 🏥 Sistema Médico Integrado - Hospital Digital
+# MediLink — PaginaWebHospital
 
-## 📖 Descripción
-Sistema web completo para la gestión hospitalaria que incluye:
-- **Frontend**: Aplicación React con Vite para pacientes, médicos y administradores
-- **Backend PHP**: API REST para gestión de usuarios, citas e historias clínicas
-- **Backend Python**: Sistema de estadísticas con FastAPI, pandas y visualizaciones
-- **Base de datos**: MySQL con sistema de bloqueos y control de accesos
+Documento actualizado y reducido para describir y ejecutar lo que realmente hay en este repositorio.
 
-## ⚙️ Características Principales
-- **👥 Gestión de usuarios**: Pacientes, médicos y administradores con autenticación separada
-- **📅 Sistema de citas**: Agendamiento con prevención de conflictos y slots ocupados
-- **📋 Historia clínica digital**: Documentación médica completa integrada con citas
-- **📄 Generación de PDF**: Reportes médicos descargables
-- **🔐 Sistema de bloqueos**: Administrador puede bloquear usuarios temporalmente
-- **📊 Estadísticas avanzadas**: Reportes con gráficos profesionales (Matplotlib/Seaborn)
-- **🎨 Interfaz moderna**: Diseño responsivo con Bootstrap
-- **🩺 Gestión de CUPS**: Códigos únicos de procedimientos en salud
-- **💊 Prescripciones**: Tabla interactiva de medicamentos
-- **🚫 Incapacidades**: Gestión de licencias médicas
+Resumen rápido
+- Frontend: Aplicación React + Vite ubicada en el directorio `src/` y `public/`.
+- API de estadísticas: código Python en `hospital_stats_api/` (FastAPI / scripts de análisis).
 
-## 📁 Estructura del Proyecto
+Nota importante: Este repositorio contiene el frontend y una API de estadísticas en Python. No incluye un backend completo en PHP/Node que gestione usuarios/citas en producción; si tienes otro backend local o base de datos, configúralo por separado.
 
-```text
-my-react-app-citas/
-├── backend/                     # Backend del proyecto
-├── public/
-│   ├── index.html
-│   └── imagenes/               # Recursos gráficos
-├── src/
-│   ├── components/             # Componentes reutilizables
-│   │   ├── ProtectedRoute.jsx  # Rutas protegidas
-│   │   ├── AppointmentsList/   # Lista de citas
-│   │   ├── Calendar/           # Componente calendario
-│   │   ├── CupsSelector/       # Selector de códigos CUPS
-│   │   ├── IncapacidadManager/ # Gestión de incapacidades
-│   │   ├── MainPage/           # Componentes página principal
-│   │   ├── MedicationTable/    # Tabla de medicamentos
-│   │   └── TimeSlots/          # Horarios disponibles
-│   ├── contexts/
-│   │   └── AuthContext.jsx     # Contexto de autenticación
-│   ├── pages/                  # Páginas principales
-│   │   ├── agendaCitas.jsx     # Agendamiento de citas
-│   │   ├── atencionMedica.jsx  # Atención médica
-│   │   ├── dashboardMedico.jsx # Dashboard médico
-│   │   ├── historiaClinica.jsx # Historia clínica
-│   │   ├── InitializeData.jsx  # Inicialización de datos
-│   │   ├── loginMedicos.jsx    # Login médicos
-│   │   ├── loginPage.jsx       # Login pacientes
-│   │   ├── mainPage.jsx        # Página principal
-│   │   ├── perfilPaciente.jsx  # Perfil del paciente
-│   │   └── setupUsers.jsx      # Configuración usuarios
-│   ├── services/               # Servicios de la aplicación
-│   │   ├── cupsService.js      # Servicio CUPS
-│   │   └── pdfServiceWorking.js # Generación PDF optimizada
-│   ├── styles/                 # Estilos CSS personalizados
-│   ├── App.jsx                 # Componente principal
-│   └── main.jsx                # Punto de entrada
-├── eslint.config.js            # Configuración ESLint
-├── package.json                # Dependencias del proyecto
-├── vite.config.js              # Configuración Vite
-└── README.md                   # Documentación
-```
+## Estructura principal
 
-## 🚀 Instalación y Configuración
+Repositorios y carpetas más relevantes:
 
-### 📋 Prerrequisitos
+- `src/` — Código del frontend React (componentes, páginas, estilos).
+- `public/` — Recursos estáticos (index.html, imágenes).
+- `hospital_stats_api/` — API y scripts Python para generación de estadísticas y visualizaciones.
+- `package.json`, `vite.config.js` — Configuración y scripts del frontend.
 
-#### Para Windows:
-- [XAMPP](https://www.apachefriends.org/es/download.html) (incluye Apache, MySQL y PHP)
-- [Node.js](https://nodejs.org/) (versión 16 o superior)
-- [Python 3.8+](https://www.python.org/downloads/)
-- [Git](https://git-scm.com/download/win)
+Para más detalles sobre el API de estadísticas revisa `hospital_stats_api/README.md`.
 
-#### Para Linux (Ubuntu/Debian):
-- XAMPP o MySQL Server
-- Node.js y npm
-- Python 3.8+ y pip
+## Requisitos (mínimos)
+
+- Node.js 16+ (recomendado 18+)
+- npm o yarn
+- Python 3.8+
 - Git
 
-```bash
-# Linux - Instalar requisitos
-sudo apt update
-sudo apt install git nodejs npm python3 python3-pip python3-venv
-```
+En Windows se recomienda usar PowerShell; en Linux/macOS una terminal bash.
 
----
+## Ejecutar el proyecto (desarrollo)
 
-## 📦 Instalación Paso a Paso
+1) Frontend (React + Vite)
 
-### 1️⃣ Clonar el Repositorio
+PowerShell:
 
-```bash
-git clone https://github.com/JhoyCardona/PaginaWebHospital.git
-cd PaginaWebHospital
-```
-
----
-
-### 2️⃣ Configurar Base de Datos (MySQL)
-
-#### Windows:
-1. Inicia XAMPP Control Panel
-2. Inicia **Apache** y **MySQL**
-3. Abre http://localhost/phpmyadmin
-4. Crea una base de datos llamada `hospital_db`
-5. Importa el archivo SQL:
-   - Ve a la pestaña "Importar"
-   - Selecciona `database/medilink_db_full.sql`
-   - Clic en "Continuar"
-
-#### Linux:
-```bash
-# Iniciar XAMPP
-sudo /opt/lampp/lampp start
-
-# O si usas MySQL nativo
-sudo systemctl start mysql
-
-# Importar base de datos
-mysql -u root -p < database/medilink_db_full.sql
-```
-
----
-
-### 3️⃣ Configurar Backend PHP
-
-#### Windows:
-1. Copia la carpeta del backend a la carpeta de XAMPP:
-   ```cmd
-   xcopy /E /I backend C:\xampp\htdocs\hospital_api
-   ```
-
-#### Linux:
-```bash
-sudo cp -r backend /opt/lampp/htdocs/hospital_api
-sudo chmod -R 755 /opt/lampp/htdocs/hospital_api
-```
-
-**Verificar que funciona:**
-- Abre: http://localhost/hospital_api/sedes.php
-- Deberías ver un JSON con las sedes
-
----
-
-### 4️⃣ Configurar Backend Python (Estadísticas)
-
-#### Windows:
-```cmd
-cd hospital_stats_api
-
-# Crear entorno virtual
-python -m venv venv
-
-# Activar entorno virtual
-venv\Scripts\activate
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Iniciar servidor (en nueva ventana de CMD)
-python main.py
-```
-
-#### Linux:
-```bash
-cd hospital_stats_api
-
-# Crear entorno virtual
-python3 -m venv venv
-
-# Activar entorno virtual
-source venv/bin/activate
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Iniciar servidor en segundo plano
-nohup python main.py > server.log 2>&1 &
-```
-
-**Verificar que funciona:**
-- Abre: http://localhost:8000/docs
-- Deberías ver la documentación de FastAPI
-
----
-
-### 5️⃣ Configurar Frontend (React)
-
-#### Windows y Linux:
-```bash
-# Desde la raíz del proyecto
+```powershell
+cd c:\Users\USUARIO\OneDrive\Desktop\MediLink\PaginaWebHospital
 npm install
-
-# Iniciar en modo desarrollo
 npm run dev
 ```
 
-**Acceder a la aplicación:**
-- Frontend: http://localhost:5174
-- Backend PHP: http://localhost/hospital_api/
-- Backend Python: http://localhost:8000
-
----
-
-## 🔑 Credenciales de Prueba
-
-### Administrador:
-- **Usuario**: `admin`
-- **Contraseña**: `admin123`
-
-### Médico de Prueba:
-- **Identificación**: `DOC001`
-- **Contraseña**: `medico123`
-
-### Paciente de Prueba:
-- **Tipo documento**: `CC`
-- **Identificación**: `1234567890`
-- **Contraseña**: `paciente123`
-
----
-
-## 🎯 Orden de Inicio de Servicios
-
-1. **MySQL** (XAMPP o servicio)
-2. **Apache** (XAMPP - para PHP)
-3. **Python API** (puerto 8000)
-4. **React** (puerto 5174)
-
----
-
-## 🛠️ Comandos Útiles
-
-### Detener Servicios
-
-#### Windows:
-- XAMPP: Usa el panel de control
-- Python: `Ctrl + C` en la terminal
-- React: `Ctrl + C` en la terminal
-
-#### Linux:
-```bash
-# Detener XAMPP
-sudo /opt/lampp/lampp stop
-
-# Detener Python API
-pkill -f "uvicorn main:app"
-
-# Detener React
-Ctrl + C en la terminal
-```
-
-### Ver Logs
-
-#### Windows:
-```cmd
-# Python API
-type hospital_stats_api\server.log
-
-# React
-Ver en la consola donde ejecutaste npm run dev
-```
-
-#### Linux:
-```bash
-# Python API
-tail -f hospital_stats_api/server.log
-
-# MySQL
-sudo tail -f /opt/lampp/logs/mysql_error.log
-
-# Apache
-sudo tail -f /opt/lampp/logs/error_log
-```
-
-## 📖 Uso
-
-### Para Pacientes
-
-1. Entra a la página principal y selecciona "Pacientes"
-2. Regístrate con tus datos personales o inicia sesión si ya tienes cuenta
-3. Agenda una cita médica seleccionando médico, fecha y horario disponible
-4. Accede a "Citas programadas" para ver tu historial médico completo
-5. Descarga tus historias clínicas en formato PDF
-
-### Para Médicos
-
-1. Accede al "Portal Médicos" desde la página principal
-2. Regístrate con tu información profesional o inicia sesión
-3. Ve tu dashboard con las citas programadas por tus pacientes
-4. Atiende consultas y documenta historias clínicas completas
-5. Genera reportes y seguimiento de pacientes
-
-## 🔧 Componentes Principales
-
-### Componentes de Autenticación
-- **AuthContext**: Manejo del estado de autenticación
-- **ProtectedRoute**: Protección de rutas según roles
-
-### Componentes Médicos
-- **CupsSelector**: Selector de códigos CUPS para procedimientos
-- **MedicationTable**: Tabla interactiva para manejo de medicamentos
-- **IncapacidadManager**: Gestión de incapacidades médicas
-
-### Componentes de Interface
-- **Calendar**: Calendario interactivo para citas
-- **TimeSlots**: Gestión de horarios disponibles
-- **AppointmentsList**: Lista de citas programadas
-
-### Servicios
-
-- **cupsService**: Gestión de códigos CUPS
-- **pdfServiceWorking**: Generación optimizada de reportes PDF
-
-## 🧩 Tecnologías Utilizadas
-
-- **Frontend:** React 19.2.0 + Vite 7.1.7
-- **Estilado:** Bootstrap 5.3.8 + React Bootstrap 2.10.10 + Tailwind CSS 4.1.14
-- **Navegación:** React Router DOM 7.9.4
-- **Formularios:** React Hook Form 7.65.0 + Yup 1.7.1
-- **PDF:** jsPDF 3.0.3 + jsPDF AutoTable 5.0.2
-- **Iconos:** Font Awesome 7.1.0
-- **HTTP:** Axios 1.12.2
-- **Fechas:** date-fns 4.1.0
-- **Linting:** ESLint 9.36.0 + Standard 17.1.2
-
-## 📜 Scripts Disponibles
+Bash (Linux/macOS):
 
 ```bash
-npm run dev      # Modo desarrollo
-npm run build    # Construcción para producción
-npm run preview  # Vista previa de la construcción
-npm run lint     # Análisis de código con ESLint
+cd /ruta/al/proyecto/PaginaWebHospital
+npm install
+npm run dev
 ```
 
-## 👨‍💻 Autores
+Vite mostrará la URL local (por defecto suele ser `http://localhost:5173`) — usa la que indique la consola.
 
-**Jeisson Londoño**  
-[GitHub](https://github.com/elnurri)
+2) API de estadísticas (Python)
 
-**Jessica Gutierrez**  
-[GitHub](https://github.com/jessig24)
+PowerShell (Windows):
 
-**Jhoy Cardona**  
-[GitHub](https://github.com/JhoyCardona)
+```powershell
+cd c:\Users\USUARIO\OneDrive\Desktop\MediLink\PaginaWebHospital\hospital_stats_api
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+# Inicia la API (si el proyecto usa uvicorn o ejecuta main.py directamente)
+python main.py
+```
 
-## 📄 Licencia
+Bash (Linux/macOS):
 
-Este proyecto está desarrollado con fines académicos como proyecto integrador.
+```bash
+cd /ruta/al/proyecto/PaginaWebHospital/hospital_stats_api
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
 
-## 🛠️ Contribución
+Después de arrancar la API, normalmente estará disponible en `http://localhost:8000` (o según la configuración en `main.py`). Si el proyecto usa FastAPI + Uvicorn, revisa `/hospital_stats_api/main.py` o `README.md` interno para el comando exacto.
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+## Notas sobre base de datos y backend
 
-## 💡 Futuras Mejoras
+Este repo no incluye ni obliga a una base de datos específica para el frontend. Si estás usando un backend externo (por ejemplo un servicio PHP o Node que expone las rutas de usuarios/citas), asegúrate de configurarlo y actualizar las URLs en `src/services/api.js`.
 
-- 📧 Sistema de notificaciones por email
-- 📊 Dashboard con estadísticas y reportes avanzados
-- 🔄 Integración con sistemas de salud externos
-- 📱 Aplicación móvil nativa
-- 🗄️ Migración a base de datos PostgreSQL/MongoDB
-- 🌐 Implementación de API REST con Node.js/Express
-- 🔐 Autenticación OAuth2 y JWT
-- 📋 Sistema de recordatorios automáticos
-- 🏥 Integración con equipos médicos IoT
+Si tienes SQL o scripts de datos en otra carpeta, colócalos y documenta su importación (por ejemplo con phpMyAdmin o mysql CLI).
 
-## 📞 Soporte
+## Scripts útiles (npm)
 
-Para soporte técnico o consultas sobre el proyecto:
+- `npm run dev` — Inicia Vite en modo desarrollo.
+- `npm run build` — Genera la versión de producción.
+- `npm run preview` — Vista previa de la build de producción.
+- `npm run lint` — Ejecuta ESLint (si está configurado).
 
-- **GitHub Issues**: [Reportar problemas](https://github.com/JhoyCardona/PaginaWebHospital/issues)
-- **Repositorio**: [PaginaWebHospital](https://github.com/JhoyCardona/PaginaWebHospital)
+Consulta `package.json` para el detalle exacto de scripts.
 
-## 📱 Acceso Rápido
+## Contribución
 
-**URL de desarrollo:** `http://localhost:5173`
+1. Fork del repositorio.
+2. Crea una rama: `git checkout -b feature/mi-cambio`.
+3. Haz commits claros: `git commit -m "feat: descripción breve"`.
+4. Push y Pull Request.
 
-### Usuarios de Prueba
+Si vas a añadir un backend o migrar la DB, agrega un archivo `hospital_api/README.md` o `docs/` con instrucciones claras.
 
-- **Paciente:** Regístrate desde la página principal
-- **Médico:** Accede al Portal Médicos y regístrate con tus datos profesionales
+## Autor y contacto
+
+- Jhoy Cardona — https://github.com/JhoyCardona
+- Jessica Gutierrez — https://github.com/jessig24
+- Jeisson Londoño — https://github.com/elnurri
+
+Para problemas o dudas abre un Issue en GitHub: https://github.com/JhoyCardona/PaginaWebHospital/issues
+
+## Licencia
+
+Proyecto con fines académicos. Añade una licencia si quieres permitir contribuciones externas (por ejemplo MIT).
 
 ---
 
-⭐ **¡No olvides darle una estrella al proyecto si te resultó útil!** ⭐
+Si quieres que deje el README también en inglés, o que incorpore los comandos exactos para ejecutar `hospital_stats_api` con `uvicorn`, dímelo y lo actualizo. 
