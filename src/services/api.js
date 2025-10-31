@@ -109,6 +109,66 @@ const api = {
   },
   getAllBlocks: () => request('admin_blocks.php'),
 
+  // ==================== ESTADÍSTICAS (Python API) ====================
+  // Base URL para el servicio de estadísticas en Python
+  STATS_BASE: 'http://localhost:8000/api',
+
+  // Obtener todas las estadísticas
+  getEstadisticas: async () => {
+    const res = await fetch('http://localhost:8000/api/estadisticas')
+    if (!res.ok) throw new Error('Error obteniendo estadísticas')
+    return res.json()
+  },
+
+  // Estadísticas específicas por entidad
+  getEstadisticasPacientes: async () => {
+    const res = await fetch('http://localhost:8000/api/estadisticas/pacientes')
+    if (!res.ok) throw new Error('Error obteniendo estadísticas de pacientes')
+    return res.json()
+  },
+
+  getEstadisticasMedicos: async () => {
+    const res = await fetch('http://localhost:8000/api/estadisticas/medicos')
+    if (!res.ok) throw new Error('Error obteniendo estadísticas de médicos')
+    return res.json()
+  },
+
+  getEstadisticasSedes: async () => {
+    const res = await fetch('http://localhost:8000/api/estadisticas/sedes')
+    if (!res.ok) throw new Error('Error obteniendo estadísticas de sedes')
+    return res.json()
+  },
+
+  getEstadisticasCitas: async () => {
+    const res = await fetch('http://localhost:8000/api/estadisticas/citas')
+    if (!res.ok) throw new Error('Error obteniendo estadísticas de citas')
+    return res.json()
+  },
+
+  // Generar reporte HTML
+  generarReporte: async () => {
+    const res = await fetch('http://localhost:8000/api/reporte/generar', {
+      method: 'POST'
+    })
+    if (!res.ok) throw new Error('Error generando reporte')
+    return res.json()
+  },
+
+  // Descargar reporte HTML
+  descargarReporte: () => {
+    window.open('http://localhost:8000/api/reporte/descargar', '_blank')
+  },
+
+  // Verificar estado de la API de estadísticas
+  checkStatsHealth: async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/health')
+      return res.ok ? await res.json() : { status: 'unhealthy' }
+    } catch (error) {
+      return { status: 'unreachable', error: error.message }
+    }
+  },
+
   // Otros utilitarios (si los necesitas)
   request
 }

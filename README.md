@@ -1,20 +1,23 @@
 # 🏥 Sistema Médico Integrado - Hospital Digital
 
 ## 📖 Descripción
-Este proyecto es una aplicación web desarrollada en React que digitaliza la gestión médica hospitalaria. Permite el registro completo de pacientes y médicos, facilitando la solicitud y gestión de citas médicas, creación de historias clínicas digitales y descarga de reportes médicos en formato PDF. La plataforma conecta de manera bidireccional a pacientes y profesionales de la salud en un entorno digital seguro y eficiente.
+Sistema web completo para la gestión hospitalaria que incluye:
+- **Frontend**: Aplicación React con Vite para pacientes, médicos y administradores
+- **Backend PHP**: API REST para gestión de usuarios, citas e historias clínicas
+- **Backend Python**: Sistema de estadísticas con FastAPI, pandas y visualizaciones
+- **Base de datos**: MySQL con sistema de bloqueos y control de accesos
 
 ## ⚙️ Características Principales
-- **👥 Gestión dual de usuarios**: Registro y autenticación separada para pacientes y médicos
-- **📅 Sistema de citas inteligente**: Agendamiento automático con médicos registrados
-- **📋 Historia clínica digital**: Documentación médica completa y profesional
-- **📄 Generación de PDF**: Reportes médicos descargables con información detallada
-- **🔐 Autenticación segura**: Acceso protegido con rutas privadas
-- **🎨 Interfaz profesional**: Diseño médico con experiencia optimizada
-- **📱 Diseño responsivo**: Accesible desde cualquier dispositivo
-- **💾 Almacenamiento local**: Gestión de datos con localStorage para persistencia
-- **🩺 Gestión de CUPS**: Sistema integrado de códigos únicos de procedimientos en salud
-- **💊 Manejo de medicamentos**: Tabla interactiva para prescripciones médicas
-- **🚫 Control de incapacidades**: Gestión especializada de licencias médicas
+- **👥 Gestión de usuarios**: Pacientes, médicos y administradores con autenticación separada
+- **📅 Sistema de citas**: Agendamiento con prevención de conflictos y slots ocupados
+- **📋 Historia clínica digital**: Documentación médica completa integrada con citas
+- **📄 Generación de PDF**: Reportes médicos descargables
+- **🔐 Sistema de bloqueos**: Administrador puede bloquear usuarios temporalmente
+- **📊 Estadísticas avanzadas**: Reportes con gráficos profesionales (Matplotlib/Seaborn)
+- **🎨 Interfaz moderna**: Diseño responsivo con Bootstrap
+- **🩺 Gestión de CUPS**: Códigos únicos de procedimientos en salud
+- **💊 Prescripciones**: Tabla interactiva de medicamentos
+- **🚫 Incapacidades**: Gestión de licencias médicas
 
 ## 📁 Estructura del Proyecto
 
@@ -61,49 +64,214 @@ my-react-app-citas/
 
 ## 🚀 Instalación y Configuración
 
-### Prerrequisitos
+### 📋 Prerrequisitos
 
-- Node.js (versión 16 o superior)
-- npm (incluido con Node.js)
+#### Para Windows:
+- [XAMPP](https://www.apachefriends.org/es/download.html) (incluye Apache, MySQL y PHP)
+- [Node.js](https://nodejs.org/) (versión 16 o superior)
+- [Python 3.8+](https://www.python.org/downloads/)
+- [Git](https://git-scm.com/download/win)
+
+#### Para Linux (Ubuntu/Debian):
+- XAMPP o MySQL Server
+- Node.js y npm
+- Python 3.8+ y pip
 - Git
 
-### Pasos de instalación
+```bash
+# Linux - Instalar requisitos
+sudo apt update
+sudo apt install git nodejs npm python3 python3-pip python3-venv
+```
 
-1. **Clona este repositorio:**
+---
 
-   ```bash
-   git clone https://github.com/JhoyCardona/PaginaWebHospital.git
+## 📦 Instalación Paso a Paso
+
+### 1️⃣ Clonar el Repositorio
+
+```bash
+git clone https://github.com/JhoyCardona/PaginaWebHospital.git
+cd PaginaWebHospital
+```
+
+---
+
+### 2️⃣ Configurar Base de Datos (MySQL)
+
+#### Windows:
+1. Inicia XAMPP Control Panel
+2. Inicia **Apache** y **MySQL**
+3. Abre http://localhost/phpmyadmin
+4. Crea una base de datos llamada `hospital_db`
+5. Importa el archivo SQL:
+   - Ve a la pestaña "Importar"
+   - Selecciona `database/medilink_db_full.sql`
+   - Clic en "Continuar"
+
+#### Linux:
+```bash
+# Iniciar XAMPP
+sudo /opt/lampp/lampp start
+
+# O si usas MySQL nativo
+sudo systemctl start mysql
+
+# Importar base de datos
+mysql -u root -p < database/medilink_db_full.sql
+```
+
+---
+
+### 3️⃣ Configurar Backend PHP
+
+#### Windows:
+1. Copia la carpeta del backend a la carpeta de XAMPP:
+   ```cmd
+   xcopy /E /I backend C:\xampp\htdocs\hospital_api
    ```
 
-2. **Entra al directorio del proyecto:**
+#### Linux:
+```bash
+sudo cp -r backend /opt/lampp/htdocs/hospital_api
+sudo chmod -R 755 /opt/lampp/htdocs/hospital_api
+```
 
-   ```bash
-   cd PaginaWebHospital/my-react-app-citas
-   ```
+**Verificar que funciona:**
+- Abre: http://localhost/hospital_api/sedes.php
+- Deberías ver un JSON con las sedes
 
-3. **Instala las dependencias:**
+---
 
-   ```bash
-   npm install
-   ```
+### 4️⃣ Configurar Backend Python (Estadísticas)
 
-4. **Ejecuta el proyecto en modo desarrollo:**
+#### Windows:
+```cmd
+cd hospital_stats_api
 
-   ```bash
-   npm run dev
-   ```
+# Crear entorno virtual
+python -m venv venv
 
-5. **Accede a la aplicación:**
+# Activar entorno virtual
+venv\Scripts\activate
 
-   Abre tu navegador en `http://localhost:5173`
+# Instalar dependencias
+pip install -r requirements.txt
 
-### Inicialización de Datos
+# Iniciar servidor (en nueva ventana de CMD)
+python main.py
+```
 
-El sistema comienza sin datos por defecto. Para usar la aplicación:
+#### Linux:
+```bash
+cd hospital_stats_api
 
-1. Los **pacientes** pueden registrarse desde el formulario de login principal
-2. Los **médicos** pueden registrarse desde el portal médico
-3. Las **historias clínicas** se crean durante las consultas médicas
+# Crear entorno virtual
+python3 -m venv venv
+
+# Activar entorno virtual
+source venv/bin/activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Iniciar servidor en segundo plano
+nohup python main.py > server.log 2>&1 &
+```
+
+**Verificar que funciona:**
+- Abre: http://localhost:8000/docs
+- Deberías ver la documentación de FastAPI
+
+---
+
+### 5️⃣ Configurar Frontend (React)
+
+#### Windows y Linux:
+```bash
+# Desde la raíz del proyecto
+npm install
+
+# Iniciar en modo desarrollo
+npm run dev
+```
+
+**Acceder a la aplicación:**
+- Frontend: http://localhost:5174
+- Backend PHP: http://localhost/hospital_api/
+- Backend Python: http://localhost:8000
+
+---
+
+## 🔑 Credenciales de Prueba
+
+### Administrador:
+- **Usuario**: `admin`
+- **Contraseña**: `admin123`
+
+### Médico de Prueba:
+- **Identificación**: `DOC001`
+- **Contraseña**: `medico123`
+
+### Paciente de Prueba:
+- **Tipo documento**: `CC`
+- **Identificación**: `1234567890`
+- **Contraseña**: `paciente123`
+
+---
+
+## 🎯 Orden de Inicio de Servicios
+
+1. **MySQL** (XAMPP o servicio)
+2. **Apache** (XAMPP - para PHP)
+3. **Python API** (puerto 8000)
+4. **React** (puerto 5174)
+
+---
+
+## 🛠️ Comandos Útiles
+
+### Detener Servicios
+
+#### Windows:
+- XAMPP: Usa el panel de control
+- Python: `Ctrl + C` en la terminal
+- React: `Ctrl + C` en la terminal
+
+#### Linux:
+```bash
+# Detener XAMPP
+sudo /opt/lampp/lampp stop
+
+# Detener Python API
+pkill -f "uvicorn main:app"
+
+# Detener React
+Ctrl + C en la terminal
+```
+
+### Ver Logs
+
+#### Windows:
+```cmd
+# Python API
+type hospital_stats_api\server.log
+
+# React
+Ver en la consola donde ejecutaste npm run dev
+```
+
+#### Linux:
+```bash
+# Python API
+tail -f hospital_stats_api/server.log
+
+# MySQL
+sudo tail -f /opt/lampp/logs/mysql_error.log
+
+# Apache
+sudo tail -f /opt/lampp/logs/error_log
+```
 
 ## 📖 Uso
 
